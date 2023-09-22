@@ -3,5 +3,7 @@ use crate::zixza::Zixza;
 
 fn main() {
     println!("Hello, world!");
-    Zixza::new();
+    let mut game = Zixza::new();
+    game.setup();
+    game.start();
 }
