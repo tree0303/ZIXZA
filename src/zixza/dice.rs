@@ -18,12 +18,12 @@ pub struct Dice {
     top: usize,
     left: usize,
     right: usize,
-    player: Player,
+    alive: usize, //0 dead or 1 live
 }
 
 impl Dice {
-    pub fn new(num: usize, top: usize, left: usize, right: usize, player: Player) -> Self{
-        Self { num: (num), top: (top), left: (left), right: (right), player: (player) }
+    pub fn new(num: usize, top: usize, left: usize, right: usize, alive: usize) -> Self{
+        Self { num: (num), top: (top), left: (left), right: (right), alive: (alive) }
     }
     pub fn show(&self) {
         println!("dice {}: [{}, {}, {}]", self.num, self.top, self.left, self.right);
@@ -59,12 +59,14 @@ impl Dice {
         self.right = getbacknum(self.left);
         self.left = right;
     }
-
+    pub fn dead(&mut self) {
+        self.alive=0;
+    }
+    pub fn getalive(&self) -> usize {
+        self.alive
+    }
     pub fn gettop(&self) -> usize {
         self.top
-    }
-    pub fn getplayer(&self) -> Player {
-        self.player
     }
     pub fn getnum(&self) -> usize {
         self.num

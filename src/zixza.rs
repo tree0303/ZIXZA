@@ -1,20 +1,16 @@
 pub mod board;
-use crate::zixza::board::{getcoordinate, Dice_move};
+use crate::zixza::board::{getcoordinate, DiceMove};
 use crate::zixza::{board::Board, dice::Dice};
 pub mod dice;
-use crate::zixza::dice::{Player, getbacknum, getsidenums, getrightnum};
-use rand::{Rng, rngs::ThreadRng};
-use std::{time::SystemTime, io};
+use crate::zixza::dice::{Player, getsidenums, getrightnum};
+use rand::Rng;
+use std::io;
+
+use self::board::BoardState;
 pub struct Zixza {
     player: Player,
     board: Board,
     dices: Vec<Dice>,
-    // dice1: Dice,
-    // dice2: Dice,
-    // dice3: Dice,
-    // dice4: Dice,
-    // dice5: Dice,
-    // dice6: Dice,
 }
 
 impl Zixza {
@@ -30,13 +26,15 @@ impl Zixza {
         self.board.show();
         let mut p2_dices = Vec::new();
         loop {
-            let mut top1 = 0;
-            let mut top2 = 0;
+            let mut top1: Vec<usize> = Vec::new();
+            let mut top2: Vec<usize> = Vec::new();
             let mut rng = rand::thread_rng();
             let num1 = rng.gen_range(1..=6);
             let num2 = rng.gen_range(1..=6);
             if num1 == num2 {continue;}
             println!("Player1 : {}, Player2 : {}", num1, num2);
+            top1.push(num1);
+            top2.push(num2);
             let mut player = if num1 > num2 {Player::P1} else {Player::P2};
             count += 1;
             if player==Player::P1 {
@@ -59,13 +57,15 @@ impl Zixza {
                 self.dices.push(dice);
             }
             if count == 3 {
-                if top1 > top2 { self.player = Player::P1;} else { self.player = Player::P2;}
+                if top1.iter().sum::<usize>() == top2.iter().sum() {
+                    self.player = if top1[0] > top2[0] {Player::P1} else {Player::P2};
+                } else if top1.iter().sum::<usize>() > top2.iter().sum() {
+                    self.player = Player::P1;
+                } else { 
+                    self.player = Player::P2;
+                }
                 if self.player==Player::P1 {self.board.turnboard();}
                 break;
-            } else {
-                top1 += num1;
-                top2 += num2;
-                continue;
             }
         }
         self.dices.extend(p2_dices);
@@ -80,7 +80,7 @@ impl Zixza {
                     break input;
                 }
             };
-            Dice::new(num as usize, top as usize, left as usize, getrightnum(top, left) as usize, player)
+            Dice::new(num as usize, top as usize, left as usize, getrightnum(top, left) as usize, 1)
         }
         fn setdice(board: &mut Board, player: Player, count: usize) {
             let mut list: Vec<[usize; 2]> = board.initplace(player);
@@ -109,71 +109,118 @@ impl Zixza {
     }
 
     pub fn start(&mut self) {
+        self.board.setboardstate(BoardState::InMatch);
         'main: loop {
             self.board.step_count();
             println!("");
             println!("turn_count {}", self.board.getsteps());
+            println!("Player: {}",self.player.to_string());
             println!("dice [top,left right]");
             for v in &self.dices {
                 v.show();
             }
             self.board.show();
             let (dice1, dice2) = self.dices.split_at(3);
-            let player_dice = match self.player {
-                Player::P1 => dice1.to_vec(),
-                Player::P2 => dice2.to_vec(),
+            let player_dice: Vec<Dice> = match self.player {
+                Player::P1 => dice1.to_vec().into_iter().filter(|&v| v.getalive()==1).collect(),
+                Player::P2 => dice2.to_vec().into_iter().filter(|&v| v.getalive()==1).collect(),
             };
-
             let player_dice_nums: Vec<usize> = player_dice.iter().map(|v| v.getnum()).collect();
             println!("Choose moving dice from {:?}", player_dice_nums);
-            let (dice_num, dice_move) = 'select_dice: loop {
+            let (dice_num, dicemove, attack) = 'select_dice: loop {
                 let dice_num = input_usize();
                 if player_dice_nums.iter().any(|v| *v==dice_num) {
                     loop {
-                        let dice_moves = self.board.dice_move(dice_num, &self.dices);
+                        let (dicemoves, attack) = self.board.dice_move(dice_num, &self.dices);
                         println!("Choose a movement from");
-                        for (i, v) in dice_moves.iter().enumerate() {
+                        for (i, v) in dicemoves.iter().enumerate() {
                             println!("{}: {}", i+1, v.to_string());
                         }
                         let input = input_usize();
-                        if input > 0 && input <= dice_moves.len() {
-                            break 'select_dice (dice_num, dice_moves[input-1]);
+                        if input > 0 && input <= dicemoves.len() {
+                            break 'select_dice (dice_num, dicemoves[input-1], attack);
                         }
                         println!("again");
                     }
                 }
             };
 
-            match dice_move {
-                Dice_move::ForwardLeft => {
-                    self.dices[dice_num].forward_left();
+            match dicemove {
+                DiceMove::ForwardLeft => {
+                    if attack != 6 {self.dices[attack].dead()};
+                    self.dices[dice_num-1].forward_left();
                     self.board.forward_left(dice_num);
+                    self.board.rewind(self.player, dicemove)
                 },
-                Dice_move::ForwardRight => {
-                    self.dices[dice_num].forward_right();
+                DiceMove::ForwardRight => {
+                    if attack != 6 {self.dices[attack].dead()};
+                    self.dices[dice_num-1].forward_right();
                     self.board.forward_right(dice_num);
+                    self.board.rewind(self.player, dicemove)
                 },
-                Dice_move::BackwardLeft => {
-                    self.dices[dice_num].backward_left();
+                DiceMove::BackwardLeft => {
+                    self.dices[dice_num-1].backward_left();
+                    if attack != 6 {self.dices[attack].dead()};
                     self.board.backward_left(dice_num);
+                    self.board.rewind(self.player, dicemove)
                 },
-                Dice_move::BackwardRight => {
-                    self.dices[dice_num].backward_right();
+                DiceMove::BackwardRight => {
+                    if attack != 6 {self.dices[attack].dead()};
+                    self.dices[dice_num-1].backward_right();
                     self.board.backward_right(dice_num);
+                    self.board.rewind(self.player, dicemove)
                 },
-                Dice_move::TurnLeft => {
-                    self.dices[dice_num].turn_left();
+                DiceMove::TurnLeft => {
+                    self.dices[dice_num-1].turn_left();
+                    self.board.sameboard_count();
+                    self.board.rewind(self.player, dicemove)
                 },
-                Dice_move::TurnRight => {
-                    self.dices[dice_num].turn_right();
+                DiceMove::TurnRight => {
+                    self.dices[dice_num-1].turn_right();
+                    self.board.sameboard_count();
+                    self.board.rewind(self.player, dicemove)
+                },
+                DiceMove::BeforeMove => print!("err"),
+            }
+            match self.boardcheck() {
+                BoardState::BeforeMatch => println!("err"),
+                BoardState::InMatch => {
+                    self.player = if self.player==Player::P1 {Player::P2} else {Player::P1};
+                    self.board.turnboard();
+                },
+                BoardState::Draw => {
+                    println!("Draw");
+                    break 'main;
+                },
+                BoardState::Occupation => {
+                    break 'main;
+                },
+                BoardState::Reach => {
+                    break 'main;
+                },
+                BoardState::Seizure => {
+                    break 'main;
                 },
             }
-            self.player = if self.player==Player::P1 {Player::P2} else {Player::P1};
-            self.board.turnboard();
+            
         }
     }
-    // 勝利条件
-    
+    pub fn boardcheck(&mut self) -> BoardState{
+        if self.board.getsameboardcount() == 3 {
+            self.board.setboardstate(BoardState::Draw);
+        }
+        self.board.win_check(self.player); //占拠，到達
+        let (dice1, dice2) = self.dices.split_at(3);
+        let enemy_player = if self.player==Player::P1 {Player::P2} else {Player::P1};
+        let alive_dice: Vec<Dice> = match enemy_player {
+            Player::P1 => dice1.to_vec().into_iter().filter(|&v| v.getalive()==1).collect(),
+            Player::P2 => dice2.to_vec().into_iter().filter(|&v| v.getalive()==1).collect(),
+        };
+        if alive_dice.iter().len() <= 1 {
+            self.board.setboardstate(BoardState::Seizure);
+        }
+        self.board.getboardstate()
+    }
 }
 
 
