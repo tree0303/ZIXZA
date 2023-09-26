@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'zixzaa'",
+            "name": "Debug executable 'ZIXZA'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=zixzaa",
-                    "--package=zixzaa"
+                    "--bin=ZIXZA",
+                    "--package=ZIXZA"
                 ],
                 "filter": {
-                    "name": "zixzaa",
+                    "name": "ZIXZA",
                     "kind": "bin"
                 }
             },
@@ -25,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'zixzaa'",
+            "name": "Debug unit tests in executable 'ZIXZA'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=zixzaa",
-                    "--package=zixzaa"
+                    "--bin=ZIXZA",
+                    "--package=ZIXZA"
                 ],
                 "filter": {
-                    "name": "zixzaa",
+                    "name": "ZIXZA",
                     "kind": "bin"
                 }
             },
