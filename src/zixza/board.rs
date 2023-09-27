@@ -133,7 +133,7 @@ impl Board {
                 self.board[size-i-1][size-j-1] = buf1;
             }
         }
-        for i in 0..size {
+        for i in 0..size/2 {
             let buf1 = self.board[3][i];
             let buf2 = self.board[3][size-i-1];
             self.board[3][i] = buf2;
