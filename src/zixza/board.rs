@@ -26,10 +26,7 @@ impl DiceMove {
 pub enum BoardState {
     BeforeMatch,
     InMatch,
-    Seizure,
-    Occupation,
-    Reach,
-    Draw,
+    Finish,
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -66,8 +63,8 @@ impl Piece {
 pub struct Board {
     steps: usize, //ターン数
     board: Vec<Vec<Piece>>,
-    movementbefore_p1: DiceMove,
-    movementbefore_p2: DiceMove,
+    movementbefore_p1: (usize, DiceMove),//123456
+    movementbefore_p2: (usize, DiceMove),
     sameboardcount: usize,
     boardstate: BoardState,
 }
@@ -81,7 +78,7 @@ impl Board {
             vec![Piece::Wall ,Piece::Empty,Piece::Empty,Piece::Empty,Piece::Empty,Piece::Empty,Piece::Empty],
             vec![Piece::Wall ,Piece::Wall ,Piece::Empty,Piece::Empty,Piece::Empty,Piece::Empty,Piece::Wall ],
             vec![Piece::Wall ,Piece::Wall ,Piece::Wall ,Piece::Empty,Piece::Empty,Piece::Wall ,Piece::Player2 ],
-        ]), movementbefore_p1: (DiceMove::BeforeMove), movementbefore_p2: (DiceMove::BeforeMove), sameboardcount: (0), boardstate: (BoardState::BeforeMatch) }
+        ]), movementbefore_p1: (0, DiceMove::BeforeMove), movementbefore_p2: (0, DiceMove::BeforeMove), sameboardcount: (0), boardstate: (BoardState::BeforeMatch) }
     }
     pub fn show(&self) {
         println!("  A B C D E F G");
@@ -140,62 +137,57 @@ impl Board {
             self.board[3][size-i-1] = buf1;
         }
     }
-    pub fn dice_move(&mut self, dice_num: usize, dices: &Vec<Dice>) -> (Vec<DiceMove>, usize) { //usize=>attack?
-        let mut dicemoves: Vec<DiceMove> = Vec::new();
-        let mut attack = 6;
+    pub fn dice_move(&mut self, dice_num: usize, dices: &Vec<Dice>) -> Vec<(DiceMove, usize)> { //usize=>attack?
+        let mut dicemoves: Vec<(DiceMove, usize)> = Vec::new();
         let (enemy_dices, beforemove) = if dice_num < 4 { (vec![Piece::Dice4, Piece::Dice5, Piece::Dice6], self.movementbefore_p1)} else {(vec![Piece::Dice1, Piece::Dice2, Piece::Dice3], self.movementbefore_p2)};
         let dice_position = self.get_dice_position(dice_num);
-        if dice_position[1] != 0 && beforemove != DiceMove::BackwardRight {if self.board[dice_position[0]][dice_position[1]-1] != Piece::Wall {
+        if dice_position[1] != 0 && beforemove != (dice_num, DiceMove::BackwardRight) {if self.board[dice_position[0]][dice_position[1]-1] != Piece::Wall {
             if let Some(mut enemy_dice_position) = enemy_dices.iter().position(|v| *v==self.board[dice_position[0]][dice_position[1]-1]) {
                 if dice_num < 4 {enemy_dice_position+=3};
                 if dices[dice_num-1].gettop() > dices[enemy_dice_position].gettop() {
-                    dicemoves.push(DiceMove::ForwardLeft);
-                    attack = enemy_dice_position;
+                    dicemoves.push((DiceMove::ForwardLeft, enemy_dice_position));
                 }
             }
             else {
-                dicemoves.push(DiceMove::ForwardLeft);
+                dicemoves.push((DiceMove::ForwardLeft, 6));
             }
         }}
-        if dice_position[0] != 0 && beforemove != DiceMove::BackwardLeft {if self.board[dice_position[0]-1][dice_position[1]] != Piece::Wall {
+        if dice_position[0] != 0 && beforemove != (dice_num, DiceMove::BackwardLeft) {if self.board[dice_position[0]-1][dice_position[1]] != Piece::Wall {
             if let Some(mut enemy_dice_position) = enemy_dices.iter().position(|v| *v==self.board[dice_position[0]-1][dice_position[1]]) {
                 if dice_num < 4 {enemy_dice_position+=3};
                 if dices[dice_num-1].gettop() > dices[enemy_dice_position].gettop() {
-                    dicemoves.push(DiceMove::ForwardRight);
-                    attack = enemy_dice_position;
+                    dicemoves.push((DiceMove::ForwardRight, enemy_dice_position));
                 }
             }
             else {
-                dicemoves.push(DiceMove::ForwardRight);
+                dicemoves.push((DiceMove::ForwardRight, 6));
             }
         }}
-        if dice_position[0] != 6 && beforemove != DiceMove::ForwardRight {if self.board[dice_position[0]+1][dice_position[1]] != Piece::Wall {
+        if dice_position[0] != 6 && beforemove != (dice_num, DiceMove::ForwardRight) {if self.board[dice_position[0]+1][dice_position[1]] != Piece::Wall {
             if let Some(mut enemy_dice_position) = enemy_dices.iter().position(|v| *v==self.board[dice_position[0]+1][dice_position[1]]) {
                 if dice_num < 4 {enemy_dice_position+=3};
                 if dices[dice_num-1].gettop() > dices[enemy_dice_position].gettop() {
-                    dicemoves.push(DiceMove::BackwardLeft);
-                    attack = enemy_dice_position;
+                    dicemoves.push((DiceMove::BackwardLeft, enemy_dice_position));
                 }
             }
             else {
-                dicemoves.push(DiceMove::BackwardLeft);
+                dicemoves.push((DiceMove::BackwardLeft, 6));
             }
         }}
-        if dice_position[1] != 6 && beforemove != DiceMove::ForwardLeft {if self.board[dice_position[0]][dice_position[1]+1] != Piece::Wall {
+        if dice_position[1] != 6 && beforemove != (dice_num, DiceMove::ForwardLeft) {if self.board[dice_position[0]][dice_position[1]+1] != Piece::Wall {
             if let Some(mut enemy_dice_position) = enemy_dices.iter().position(|v| *v==self.board[dice_position[0]][dice_position[1]+1]) {
                 if dice_num < 4 {enemy_dice_position+=3};
                 if dices[dice_num-1].gettop() > dices[enemy_dice_position].gettop() {
-                    dicemoves.push(DiceMove::BackwardRight);
-                    attack = enemy_dice_position;
+                    dicemoves.push((DiceMove::BackwardRight, enemy_dice_position));
                 }
             }
             else {
-                dicemoves.push(DiceMove::BackwardRight);
+                dicemoves.push((DiceMove::BackwardRight, 6));
             }
         }}
-        if beforemove != DiceMove::TurnRight {dicemoves.push(DiceMove::TurnLeft);}
-        if beforemove != DiceMove::TurnLeft {dicemoves.push(DiceMove::TurnRight);}
-        (dicemoves, attack)
+        if beforemove != (dice_num, DiceMove::TurnRight) {dicemoves.push((DiceMove::TurnLeft, 6));}
+        if beforemove != (dice_num, DiceMove::TurnLeft) {dicemoves.push((DiceMove::TurnRight, 6));}
+        dicemoves // attack 012345 non6
     }
     pub fn forward_left(&mut self, dice_num: usize) {
         let dice_position = self.get_dice_position(dice_num);
@@ -221,10 +213,10 @@ impl Board {
         self.board[dice_position[0]][dice_position[1]] = Piece::Empty;
         self.sameboardcount=0;
     }
-    pub fn rewind(&mut self, player: Player, dicemove: DiceMove) {
+    pub fn rewind(&mut self, player: Player, dice_num: usize, dicemove: DiceMove) {
         match player {
-            Player::P1 => self.movementbefore_p1 = dicemove,
-            Player::P2 => self.movementbefore_p2 = dicemove,
+            Player::P1 => self.movementbefore_p1 = (dice_num, dicemove),
+            Player::P2 => self.movementbefore_p2 = (dice_num, dicemove),
         }
     }
     pub fn getsameboardcount(&self) -> usize {
@@ -239,7 +231,7 @@ impl Board {
     pub fn getsteps(&self) -> usize{
         self.steps
     }
-    pub fn get_dice_position(&mut self, dice_num: usize) -> [usize; 2] {
+    pub fn get_dice_position(&mut self, dice_num: usize) -> [usize; 2] { //dice_num->123456
         let mut dice_position = [0, 0];
         'out: for (i,v) in self.board.iter().enumerate() {
             for (j, w) in v.iter().enumerate() {
@@ -257,18 +249,18 @@ impl Board {
         match player {
             Player::P1 => {
                 if p1.iter().any(|w| *w==self.board[center[0][0]][center[0][1]]) && p1.iter().any(|w| *w==self.board[center[1][0]][center[1][1]]) && p1.iter().any(|w| *w==self.board[center[2][0]][center[2][1]]){
-                    self.boardstate = BoardState::Occupation;
+                    self.boardstate = BoardState::Finish;
                 }
                 if p1.iter().any(|w| *w==self.board[1][1]) {
-                    self.boardstate = BoardState::Reach;
+                    self.boardstate = BoardState::Finish;
                 }
             }
             Player::P2 => {
                 if p2.iter().any(|w| *w==self.board[center[0][0]][center[0][1]]) && p2.iter().any(|w| *w==self.board[center[1][0]][center[1][1]]) && p2.iter().any(|w| *w==self.board[center[2][0]][center[2][1]]){
-                    self.boardstate = BoardState::Occupation;
+                    self.boardstate = BoardState::Finish;
                 }
                 if p2.iter().any(|w| *w==self.board[1][1]) {
-                    self.boardstate = BoardState::Reach;
+                    self.boardstate = BoardState::Finish;
                 }
             }
         }

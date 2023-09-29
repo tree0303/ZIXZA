@@ -68,6 +68,9 @@ impl Dice {
     pub fn gettop(&self) -> usize {
         self.top
     }
+    pub fn getleft(&self) -> usize {
+        self.left
+    }
     pub fn getnum(&self) -> usize {
         self.num
     }
