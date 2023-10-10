@@ -137,7 +137,7 @@ impl Board {
             self.board[3][size-i-1] = buf1;
         }
     }
-    pub fn dice_move(&mut self, dice_num: usize, dices: &Vec<Dice>) -> Vec<(DiceMove, usize)> { //usize=>attack?
+    pub fn dice_move(&mut self, dice_num: usize, dices: &Vec<Dice>) -> Vec<(DiceMove, usize)> { //usize=>attack? // TODO 味方のダイスに攻撃できないようにする
         let mut dicemoves: Vec<(DiceMove, usize)> = Vec::new();
         let (enemy_dices, beforemove) = if dice_num < 4 { (vec![Piece::Dice4, Piece::Dice5, Piece::Dice6], self.movementbefore_p1)} else {(vec![Piece::Dice1, Piece::Dice2, Piece::Dice3], self.movementbefore_p2)};
         let dice_position = self.get_dice_position(dice_num);

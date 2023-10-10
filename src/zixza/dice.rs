@@ -14,7 +14,7 @@ impl Player {
 }
 #[derive(Clone, Copy, Debug)]
 pub struct Dice {
-    num: usize,
+    num: usize,//123456
     top: usize,
     left: usize,
     right: usize,

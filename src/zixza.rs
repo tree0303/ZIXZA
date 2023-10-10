@@ -19,6 +19,28 @@ impl Zixza {
         let board = Board::new();
         Self { player: Player::P1, board: board, dices: (Vec::new())}
     }
+    pub fn testset(&mut self) {
+        let mut count = 0;
+        let alive = 1;
+        let dice1 = Dice::new(1, 6, 5, 3, alive);
+        let dice2 = Dice::new(2, 2, 6, 3, alive);
+        let dice3 = Dice::new(3, 5, 1, 3, alive);
+        let dice4 = Dice::new(4, 2, 6, 3, alive);
+        let dice5 = Dice::new(5, 1, 4, 2, alive);
+        let dice6 = Dice::new(6, 2, 4, 6, alive);
+        self.dices.push(dice1);
+        self.dices.push(dice2);
+        self.dices.push(dice3);
+        self.dices.push(dice4);
+        self.dices.push(dice5);
+        self.dices.push(dice6);
+        self.board.putdice([2, 0], Player::P1, 1);
+        self.board.putdice([1, 1], Player::P1, 2);
+        self.board.putdice([0, 2], Player::P1, 3);
+        self.board.putdice([4, 6], Player::P2, 1);
+        self.board.putdice([5, 5], Player::P2, 2);
+        self.board.putdice([6, 4], Player::P2, 3);
+    }
 
     pub fn setup(&mut self) {
         let mut count = 0;
@@ -86,19 +108,19 @@ impl Zixza {
             let mut list: Vec<[usize; 2]> = board.initplace(player);
             if list.len() != 1{
                 print!("Choose a dice position from [");
-            list = list.iter().enumerate().map(|(i, v)| { 
-                print!("{}: {}",i+1,getcoordinate(&v[0], &v[1]).as_str());
-                if i < list.len()-1 {print!(", ");}
-                *v
-            }).collect();
-            println!("]");
-            let position = loop {
-                let input = input_usize(); // サイコロの初期位置
-                if input > 0 && input <= list.len() {
-                    break list[input-1];
-                }
-            };
-            board.putdice(position, player, count);
+                list = list.iter().enumerate().map(|(i, v)| { 
+                    print!("{}: {}",i+1,getcoordinate(&v[0], &v[1]).as_str());
+                    if i < list.len()-1 {print!(", ");}
+                    *v
+                }).collect();
+                println!("]");
+                let position = loop {
+                    let input = input_usize(); // サイコロの初期位置
+                    if input > 0 && input <= list.len() {
+                        break list[input-1];
+                    }
+                };
+                board.putdice(position, player, count);
             } else {
                 let position = list[0];
                 println!("dice position is {}", getcoordinate(&position[0], &position[1]));
@@ -170,6 +192,10 @@ impl Zixza {
         }
     }
     pub fn step(&mut self, action: (usize, DiceMove, usize)) -> (Vec<usize>, usize, bool){ // action(dice_num, dice_action, attack)  next_state, reward, done
+        for v in &self.dices {
+            v.show();
+        }
+        self.board.show();
         self.board.setboardstate(BoardState::InMatch);
         let (dice_num, dice_action, attack) = (action.0, action.1, action.2);
         let mut done = false;
@@ -320,7 +346,7 @@ impl Zixza {
     }
 
     pub fn boardcheck(&mut self) -> BoardState{
-        if self.board.getsameboardcount() == 3 {
+        if self.board.getsameboardcount() == 3 {//引き分け
             self.board.setboardstate(BoardState::Finish);
         }
         self.board.win_check(self.player); //占拠，到達
@@ -365,7 +391,7 @@ impl Zixza {
     
 }
 
-fn input_usize() -> usize {
+pub fn input_usize() -> usize {
     let mut input = String::new();
     'input: loop {
         match io::stdin().read_line(&mut input) {
