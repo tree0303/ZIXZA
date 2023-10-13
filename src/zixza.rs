@@ -20,7 +20,6 @@ impl Zixza {
         Self { player: Player::P1, board: board, dices: (Vec::new())}
     }
     pub fn testset(&mut self) {
-        let mut count = 0;
         let alive = 1;
         let dice1 = Dice::new(1, 6, 5, 3, alive);
         let dice2 = Dice::new(2, 2, 6, 3, alive);
@@ -40,6 +39,13 @@ impl Zixza {
         self.board.putdice([4, 6], Player::P2, 1);
         self.board.putdice([5, 5], Player::P2, 2);
         self.board.putdice([6, 4], Player::P2, 3);
+    }
+    pub fn show(&self) {
+        self.board.show();
+    }
+    pub fn reset(&mut self) {
+        self.board = Board::new();
+        self.dices = Vec::new();
     }
 
     pub fn setup(&mut self) {
@@ -192,9 +198,9 @@ impl Zixza {
         }
     }
     pub fn step(&mut self, action: (usize, DiceMove, usize)) -> (Vec<usize>, usize, bool){ // action(dice_num, dice_action, attack)  next_state, reward, done
-        for v in &self.dices {
-            v.show();
-        }
+        // for v in &self.dices {
+        //     v.show();
+        // }
         self.board.show();
         self.board.setboardstate(BoardState::InMatch);
         let (dice_num, dice_action, attack) = (action.0, action.1, action.2);
@@ -348,6 +354,7 @@ impl Zixza {
     pub fn boardcheck(&mut self) -> BoardState{
         if self.board.getsameboardcount() == 3 {//引き分け
             self.board.setboardstate(BoardState::Finish);
+            println!("draw");//TODO draw
         }
         self.board.win_check(self.player); //占拠，到達
         let (dice1, dice2) = self.dices.split_at(3);

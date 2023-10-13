@@ -1,5 +1,5 @@
 use super::dice::{Player, Dice};
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum DiceMove {
     ForwardLeft,
     ForwardRight,
@@ -139,9 +139,10 @@ impl Board {
     }
     pub fn dice_move(&mut self, dice_num: usize, dices: &Vec<Dice>) -> Vec<(DiceMove, usize)> { //usize=>attack? // TODO 味方のダイスに攻撃できないようにする
         let mut dicemoves: Vec<(DiceMove, usize)> = Vec::new();
-        let (enemy_dices, beforemove) = if dice_num < 4 { (vec![Piece::Dice4, Piece::Dice5, Piece::Dice6], self.movementbefore_p1)} else {(vec![Piece::Dice1, Piece::Dice2, Piece::Dice3], self.movementbefore_p2)};
+        let (player_dices, enemy_dices, beforemove) = if dice_num < 4 { (vec![Piece::Dice1, Piece::Dice2, Piece::Dice3], vec![Piece::Dice4, Piece::Dice5, Piece::Dice6], self.movementbefore_p1)} else {(vec![Piece::Dice4, Piece::Dice5, Piece::Dice6], vec![Piece::Dice1, Piece::Dice2, Piece::Dice3], self.movementbefore_p2)};
         let dice_position = self.get_dice_position(dice_num);
-        if dice_position[1] != 0 && beforemove != (dice_num, DiceMove::BackwardRight) {if self.board[dice_position[0]][dice_position[1]-1] != Piece::Wall {
+        //左が端ではなく，壁でもなく，味方のダイスがあるわけでもなく，一手番前を繰り返す行動でもない
+        if dice_position[1] != 0 && self.board[dice_position[0]][dice_position[1]-1] != Piece::Wall && !player_dices.iter().any(|v| *v==self.board[dice_position[0]][dice_position[1]-1]) && beforemove != (dice_num, DiceMove::BackwardRight) {
             if let Some(mut enemy_dice_position) = enemy_dices.iter().position(|v| *v==self.board[dice_position[0]][dice_position[1]-1]) {
                 if dice_num < 4 {enemy_dice_position+=3};
                 if dices[dice_num-1].gettop() > dices[enemy_dice_position].gettop() {
@@ -151,8 +152,8 @@ impl Board {
             else {
                 dicemoves.push((DiceMove::ForwardLeft, 6));
             }
-        }}
-        if dice_position[0] != 0 && beforemove != (dice_num, DiceMove::BackwardLeft) {if self.board[dice_position[0]-1][dice_position[1]] != Piece::Wall {
+        }
+        if dice_position[0] != 0 && self.board[dice_position[0]-1][dice_position[1]] != Piece::Wall && !player_dices.iter().any(|v| *v==self.board[dice_position[0]-1][dice_position[1]]) && beforemove != (dice_num, DiceMove::BackwardLeft) {
             if let Some(mut enemy_dice_position) = enemy_dices.iter().position(|v| *v==self.board[dice_position[0]-1][dice_position[1]]) {
                 if dice_num < 4 {enemy_dice_position+=3};
                 if dices[dice_num-1].gettop() > dices[enemy_dice_position].gettop() {
@@ -162,8 +163,8 @@ impl Board {
             else {
                 dicemoves.push((DiceMove::ForwardRight, 6));
             }
-        }}
-        if dice_position[0] != 6 && beforemove != (dice_num, DiceMove::ForwardRight) {if self.board[dice_position[0]+1][dice_position[1]] != Piece::Wall {
+        }
+        if dice_position[0] != 6 && self.board[dice_position[0]+1][dice_position[1]] != Piece::Wall && !player_dices.iter().any(|v| *v==self.board[dice_position[0]+1][dice_position[1]]) && beforemove != (dice_num, DiceMove::ForwardRight) {
             if let Some(mut enemy_dice_position) = enemy_dices.iter().position(|v| *v==self.board[dice_position[0]+1][dice_position[1]]) {
                 if dice_num < 4 {enemy_dice_position+=3};
                 if dices[dice_num-1].gettop() > dices[enemy_dice_position].gettop() {
@@ -173,8 +174,8 @@ impl Board {
             else {
                 dicemoves.push((DiceMove::BackwardLeft, 6));
             }
-        }}
-        if dice_position[1] != 6 && beforemove != (dice_num, DiceMove::ForwardLeft) {if self.board[dice_position[0]][dice_position[1]+1] != Piece::Wall {
+        }
+        if dice_position[1] != 6 && self.board[dice_position[0]][dice_position[1]+1] != Piece::Wall && !player_dices.iter().any(|v| *v==self.board[dice_position[0]][dice_position[1]+1]) && beforemove != (dice_num, DiceMove::ForwardLeft)  {
             if let Some(mut enemy_dice_position) = enemy_dices.iter().position(|v| *v==self.board[dice_position[0]][dice_position[1]+1]) {
                 if dice_num < 4 {enemy_dice_position+=3};
                 if dices[dice_num-1].gettop() > dices[enemy_dice_position].gettop() {
@@ -184,9 +185,9 @@ impl Board {
             else {
                 dicemoves.push((DiceMove::BackwardRight, 6));
             }
-        }}
-        if beforemove != (dice_num, DiceMove::TurnRight) {dicemoves.push((DiceMove::TurnLeft, 6));}
-        if beforemove != (dice_num, DiceMove::TurnLeft) {dicemoves.push((DiceMove::TurnRight, 6));}
+        }
+        if beforemove != (dice_num, DiceMove::TurnRight) && self.sameboardcount < 2 {dicemoves.push((DiceMove::TurnLeft, 6));}
+        if beforemove != (dice_num, DiceMove::TurnLeft) && self.sameboardcount < 2 {dicemoves.push((DiceMove::TurnRight, 6));}
         dicemoves // attack 012345 non6
     }
     pub fn forward_left(&mut self, dice_num: usize) {
@@ -251,7 +252,7 @@ impl Board {
                 if p1.iter().any(|w| *w==self.board[center[0][0]][center[0][1]]) && p1.iter().any(|w| *w==self.board[center[1][0]][center[1][1]]) && p1.iter().any(|w| *w==self.board[center[2][0]][center[2][1]]){
                     self.boardstate = BoardState::Finish;
                 }
-                if p1.iter().any(|w| *w==self.board[1][1]) {
+                if p1.iter().any(|w| *w==self.board[5][5]) {
                     self.boardstate = BoardState::Finish;
                 }
             }

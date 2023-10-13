@@ -4,12 +4,13 @@ use zixza::montecarlo::McAgent;
 use crate::zixza::{Zixza, input_usize};
 
 fn main() {
-    let loopnum = 10000;
+    let loopnum = 1000;
     let mut game = Zixza::new();
     let mut agent = McAgent::new();
     let mut state = game.get_state();
     for i in 0..loopnum {
         // game.setup();
+        game.reset();
         game.testset();
         agent.reset();
         loop {
@@ -19,12 +20,13 @@ fn main() {
             let (next_state, reward, done) = game.step(action);
             agent.add(state.iter().map(|v| *v as u64).collect(), action, reward);
             println!("{}", done);
-            let i = input_usize();
+            // let i = input_usize();
             if done {break;}
             state = next_state;
             
         }
         println!("{}",i);
+        game.show();
     }
     agent.eval();
 
