@@ -4,10 +4,14 @@ use crate::zixza::{board::Board, dice::Dice};
 pub mod dice;
 use crate::zixza::dice::{Player, getsidenums, getrightnum};
 pub mod montecarlo;
+pub mod randomagent;
 use rand::Rng;
 use std::io;
 
 use self::board::BoardState;
+
+const REWARD: usize = 5;
+
 pub struct Zixza {
     player: Player,
     board: Board,
@@ -201,7 +205,7 @@ impl Zixza {
         // for v in &self.dices {
         //     v.show();
         // }
-        self.board.show();
+        // self.board.show();
         self.board.setboardstate(BoardState::InMatch);
         let (dice_num, dice_action, attack) = (action.0, action.1, action.2);
         let mut done = false;
@@ -307,7 +311,7 @@ impl Zixza {
                     self.player = if self.player==Player::P1 {Player::P2} else {Player::P1};
                 },
                 BoardState::Finish => {
-                    reward = 50;
+                    reward = REWARD;
                     done = true;
                 },
             }
@@ -507,7 +511,7 @@ fn change_diceinfo_31(top: usize, left: usize) -> usize{
     }
 }
 
-fn to_binary(num: usize) -> Vec<usize> {
+pub fn to_binary(num: usize) -> Vec<usize> {
     let mut data: Vec<usize> = Vec::new();
     let mut n = num;
     match num < 32 {

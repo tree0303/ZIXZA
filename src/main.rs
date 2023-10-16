@@ -1,37 +1,43 @@
 mod zixza;
 use zixza::montecarlo::McAgent;
+use zixza::randomagent::RandomAgent;
 
 use crate::zixza::{Zixza, input_usize};
 
 fn main() {
-    let loopnum = 1000;
+    let loopnum = 100;
     let mut game = Zixza::new();
-    let mut agent = McAgent::new();
-    let mut state = game.get_state();
+    // let mut agent = McAgent::new();
+    let mut agent = RandomAgent::new();
     for i in 0..loopnum {
         // game.setup();
         game.reset();
         game.testset();
         agent.reset();
+        let mut state = game.get_state();
+        let mut count = 0;
         loop {
+            count += 1;
             let actions = game.get_actions();
             let action = agent.get_action(actions);
-            println!("{}{}{}", action.0, action.1.to_string(), action.2);
+            // println!("{}{}{}", action.0, action.1.to_string(), action.2);
             let (next_state, reward, done) = game.step(action);
             agent.add(state.iter().map(|v| *v as u64).collect(), action, reward);
-            println!("{}", done);
+            // println!("{}", done);
             // let i = input_usize();
-            if done {break;}
+            if done {
+                agent.eval();
+                break;
+            }
+            // println!("{:?}", state);
             state = next_state;
             
         }
-        println!("{}",i);
-        game.show();
+        // println!("count{}",count);
+        // println!("{}",i);
+        // game.show();
     }
-    agent.eval();
-
-
-
+    agent.q_show();
 
 
 

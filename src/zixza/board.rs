@@ -1,5 +1,5 @@
 use super::dice::{Player, Dice};
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Eq, Hash)]
 pub enum DiceMove {
     ForwardLeft,
     ForwardRight,
