@@ -59,7 +59,6 @@ impl Piece {
     }
     
 }
-
 pub struct Board {
     steps: usize, //ターン数
     board: Vec<Vec<Piece>>,

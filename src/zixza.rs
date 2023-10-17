@@ -8,7 +8,7 @@ pub mod randomagent;
 use rand::Rng;
 use std::io;
 
-use self::board::BoardState;
+use self::board::{BoardState, Piece};
 
 const REWARD: usize = 5;
 
@@ -267,7 +267,7 @@ impl Zixza {
             }
             return (vec![0], 0, done);
         } else {
-            let mut reward = 0;
+            let mut reward: usize = 0;
             match dice_action {
                 DiceMove::ForwardLeft => {
                     if attack != 6 {self.dices[attack].dead()};

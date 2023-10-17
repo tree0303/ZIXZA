@@ -45,7 +45,7 @@ impl Dice {
         self.left = top;
     }
     pub fn backward_right(&mut self) {
-        let top = self.right;
+        let top = self.top;
         self.top = getbacknum(self.right);
         self.right = top;
     }
@@ -75,9 +75,24 @@ impl Dice {
         self.num
     }
 
-
+    pub fn error_dice(&self) -> Vec<usize>{
+        let mut s = Vec::new();
+        s.push(self.num);
+        if self.left==self.top {
+            println!("left_top");
+            s.push(1);
+        }
+        if self.left==self.right {
+            println!("left_right");
+            s.push(2);
+        }
+        if self.top==self.right {
+            println!("top_right");
+            s.push(3);
+        }
+        return s;
+    }
     
-
 }
 pub fn getrightnum(topnum: usize, leftnum: usize) -> usize {
     match topnum {

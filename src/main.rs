@@ -5,7 +5,7 @@ use zixza::randomagent::RandomAgent;
 use crate::zixza::{Zixza, input_usize};
 
 fn main() {
-    let loopnum = 100;
+    let loopnum = 100000;
     let mut game = Zixza::new();
     // let mut agent = McAgent::new();
     let mut agent = RandomAgent::new();
@@ -34,7 +34,7 @@ fn main() {
             
         }
         // println!("count{}",count);
-        // println!("{}",i);
+        if i%10000==0{ println!("{}",i);}
         // game.show();
     }
     agent.q_show();

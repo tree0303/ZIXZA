@@ -49,9 +49,12 @@ impl RandomAgent {
         // println!("{:?}", self.q);
     }
     pub fn q_show(&self) {
+        let mut count = 0;
         for (qq, dd) in self.q.iter() {
+            count+=1;
             let a = to_binary(*qq as usize).iter().map(|v| v.to_string()).collect::<Vec<String>>().concat();
             println!("key:  {:?},   value   {}", a, dd);
+            if count==10{break;}
         }
         println!("{}",self.q.len());
     }
