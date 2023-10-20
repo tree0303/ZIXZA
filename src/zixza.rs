@@ -8,7 +8,7 @@ pub mod randomagent;
 use rand::Rng;
 use std::io;
 
-use self::board::{BoardState, Piece};
+use self::board::BoardState;
 
 const REWARD: usize = 5;
 
@@ -44,6 +44,7 @@ impl Zixza {
         self.board.putdice([5, 5], Player::P2, 2);
         self.board.putdice([6, 4], Player::P2, 3);
     }
+    #[allow(dead_code)]
     pub fn show(&self) {
         self.board.show();
     }
@@ -51,7 +52,7 @@ impl Zixza {
         self.board = Board::new();
         self.dices = Vec::new();
     }
-
+    #[allow(dead_code)]
     pub fn setup(&mut self) {
         let mut count = 0;
         println!("Player1 => a,  Player2 => b");
@@ -139,7 +140,7 @@ impl Zixza {
             
         }
     }
-
+    #[allow(dead_code)]
     pub fn start(&mut self) {
         self.board.setboardstate(BoardState::InMatch);
         'main: loop {
@@ -190,6 +191,7 @@ impl Zixza {
                     self.board.rewind(self.player, dice_num, dicemove)
                 },
                 DiceMove::BeforeMove => print!("err"),
+                DiceMove::Path => self.board.sameboard_count(),
             }
             match self.boardcheck() {
                 BoardState::BeforeMatch => println!("err"),
@@ -256,6 +258,7 @@ impl Zixza {
                     self.board.rewind(self.player, dice_num, dicemove)
                 },
                 DiceMove::BeforeMove => print!("err"),
+                DiceMove::Path => self.board.sameboard_count(),
             }
             match self.boardcheck() {
                 BoardState::BeforeMatch => println!("err"),
@@ -304,6 +307,7 @@ impl Zixza {
                     self.board.rewind(self.player, dice_num, dice_action)
                 },
                 DiceMove::BeforeMove => print!("err"),
+                DiceMove::Path => self.board.sameboard_count(),
             }
             match self.boardcheck() {
                 BoardState::BeforeMatch => println!("err"),

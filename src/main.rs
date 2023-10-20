@@ -1,13 +1,14 @@
+#![allow(non_snake_case)]
 mod zixza;
 use zixza::montecarlo::McAgent;
 use zixza::randomagent::RandomAgent;
 
-use crate::zixza::{Zixza, input_usize};
+use crate::zixza::Zixza;
 
 fn main() {
     let loopnum = 100000;
     let mut game = Zixza::new();
-    // let mut agent = McAgent::new();
+    let mut _mcagent = McAgent::new();
     let mut agent = RandomAgent::new();
     for i in 0..loopnum {
         // game.setup();
@@ -15,9 +16,7 @@ fn main() {
         game.testset();
         agent.reset();
         let mut state = game.get_state();
-        let mut count = 0;
         loop {
-            count += 1;
             let actions = game.get_actions();
             let action = agent.get_action(actions);
             // println!("{}{}{}", action.0, action.1.to_string(), action.2);
@@ -33,7 +32,6 @@ fn main() {
             state = next_state;
             
         }
-        // println!("count{}",count);
         if i%10000==0{ println!("{}",i);}
         // game.show();
     }

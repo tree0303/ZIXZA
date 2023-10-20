@@ -23,8 +23,11 @@ impl RandomAgent {
     }
     pub fn get_action(&self, actions: Vec<(usize, DiceMove, usize)>) -> (usize, DiceMove, usize) { // dice_num, dice_action, attack
         let mut rng = rand::thread_rng();
-        let random = rng.gen_range(0..actions.len());
-        return actions[random];
+        if actions.len()!=0{
+            let random = rng.gen_range(0..actions.len());
+            return actions[random];
+        }
+        return (7, DiceMove::Path, 6);
     }
     pub fn add(&mut self, vec_state: Vec<u64>, action: (usize, DiceMove, usize), reward: usize) {
         let mut m = "100".to_string();
@@ -40,10 +43,10 @@ impl RandomAgent {
     pub fn eval(&mut self) {
         let mut g: f64 = 0.0;
         for data in self.memory.iter().rev() {
-            let (state, action, reward) = data;
+            let (state, _, reward) = data;
             g = self.gamma * g + *reward as f64;
             *self.cnt.entry(*state).or_insert(0.0) += 1.0;
-            *self.q.entry(*state).or_insert(0.0);
+            let _ = *self.q.entry(*state).or_insert(0.0);
             *self.q.entry(*state).or_insert(0.0) += (g - self.q.get(state).unwrap()) / self.cnt.get(state).unwrap();
         }
         // println!("{:?}", self.q);

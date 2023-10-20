@@ -74,7 +74,7 @@ impl Dice {
     pub fn getnum(&self) -> usize {
         self.num
     }
-
+    #[allow(dead_code)]
     pub fn error_dice(&self) -> Vec<usize>{
         let mut s = Vec::new();
         s.push(self.num);

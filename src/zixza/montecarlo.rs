@@ -7,11 +7,6 @@ struct DataKey(u64, (usize, DiceMove, usize));
 
 pub struct McAgent {
     gamma: f64,
-    // key: Vec<Vec<u64>>,
-    // pi: Vec<Vec<usize>>,
-    // q: Vec<f64>,
-    // cnt: Vec<f64>,
-    // memory: Vec< (Vec<u64>, (usize, DiceMove, usize), usize) >,
     q: HashMap<DataKey, f64>,
     cnts: HashMap<DataKey, f64>,
     memory: Vec< (u64, (usize, DiceMove, usize), usize) >,

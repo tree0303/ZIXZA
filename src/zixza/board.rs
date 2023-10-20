@@ -1,5 +1,6 @@
 use super::dice::{Player, Dice};
-#[derive(PartialEq, Clone, Copy, Debug, Eq, Hash)]
+#[derive(PartialEq, Clone, Copy, Eq, Hash)]
+#[allow(dead_code)]
 pub enum DiceMove {
     ForwardLeft,
     ForwardRight,
@@ -8,6 +9,7 @@ pub enum DiceMove {
     TurnLeft,
     TurnRight,
     BeforeMove,
+    Path,
 }
 impl DiceMove {
     pub fn to_string(&self) -> &str{
@@ -19,6 +21,7 @@ impl DiceMove {
             DiceMove::TurnLeft => "Turn_Left",
             DiceMove::TurnRight => "Turn_Right",
             DiceMove::BeforeMove => "BeforeMove",
+            DiceMove::Path => "Path",
         }
     }
 }
