@@ -254,7 +254,7 @@ impl Board {
                 if p1.iter().any(|w| *w==self.board[center[0][0]][center[0][1]]) && p1.iter().any(|w| *w==self.board[center[1][0]][center[1][1]]) && p1.iter().any(|w| *w==self.board[center[2][0]][center[2][1]]){
                     self.boardstate = BoardState::Finish;
                 }
-                if p1.iter().any(|w| *w==self.board[5][5]) {
+                if p1.iter().any(|w| *w==self.board[1][1]) {
                     self.boardstate = BoardState::Finish;
                 }
             }

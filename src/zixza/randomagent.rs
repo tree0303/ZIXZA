@@ -14,12 +14,11 @@ pub struct RandomAgent {
     // memory: Vec< (Vec<u64>, (usize, DiceMove, usize), usize) >,
     q: HashMap<u64, f64>,
     cnt: HashMap<u64, f64>,
-    memory: Vec< (u64, (usize, DiceMove, usize), usize) >,
-    pi: HashMap<u64, f64>,
+    memory: Vec< (u64, (usize, DiceMove, usize), isize) >,
 }
 impl RandomAgent {
     pub fn new() -> Self {
-        Self { gamma: 0.9, q: HashMap::new(), cnt: HashMap::new(), memory: Vec::new(), pi: HashMap::new() }
+        Self { gamma: 0.9, q: HashMap::new(), cnt: HashMap::new(), memory: Vec::new() }
     }
     pub fn get_action(&self, actions: Vec<(usize, DiceMove, usize)>) -> (usize, DiceMove, usize) { // dice_num, dice_action, attack
         let mut rng = rand::thread_rng();
@@ -29,11 +28,7 @@ impl RandomAgent {
         }
         return (7, DiceMove::Path, 6);
     }
-    pub fn add(&mut self, vec_state: Vec<u64>, action: (usize, DiceMove, usize), reward: usize) {
-        let mut m = "100".to_string();
-        let str_state = vec_state.iter().map(|v| v.to_string()).collect::<Vec<String>>().concat();
-        m.push_str(&str_state);
-        let state = u64::from_str_radix(&m, 2).unwrap();
+    pub fn add(&mut self, state: u64, action: (usize, DiceMove, usize), reward: isize) {
         let data = (state, action, reward);
         self.memory.push(data);
     }

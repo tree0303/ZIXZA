@@ -10,7 +10,7 @@ use std::io;
 
 use self::board::BoardState;
 
-const REWARD: usize = 5;
+const REWARD: isize = 5;
 
 pub struct Zixza {
     player: Player,
@@ -43,6 +43,7 @@ impl Zixza {
         self.board.putdice([4, 6], Player::P2, 1);
         self.board.putdice([5, 5], Player::P2, 2);
         self.board.putdice([6, 4], Player::P2, 3);
+        if self.player==Player::P1 {self.board.turnboard();}
     }
     #[allow(dead_code)]
     pub fn show(&self) {
@@ -203,7 +204,7 @@ impl Zixza {
             }
         }
     }
-    pub fn step(&mut self, action: (usize, DiceMove, usize)) -> (Vec<usize>, usize, bool){ // action(dice_num, dice_action, attack)  next_state, reward, done
+    pub fn step(&mut self, action: (usize, DiceMove, usize)) -> (u64, isize, bool){ // action(dice_num, dice_action, attack)  next_state, reward, done
         // for v in &self.dices {
         //     v.show();
         // }
@@ -268,9 +269,9 @@ impl Zixza {
                 },
                 BoardState::Finish => done = true,
             }
-            return (vec![0], 0, done);
+            return (0, 0, done);
         } else {
-            let mut reward: usize = 0;
+            let mut reward: isize = 0;
             match dice_action {
                 DiceMove::ForwardLeft => {
                     if attack != 6 {self.dices[attack].dead()};
@@ -313,6 +314,7 @@ impl Zixza {
                 BoardState::BeforeMatch => println!("err"),
                 BoardState::InMatch => {
                     self.player = if self.player==Player::P1 {Player::P2} else {Player::P1};
+                    self.board.turnboard();
                 },
                 BoardState::Finish => {
                     reward = REWARD;
@@ -324,20 +326,24 @@ impl Zixza {
         }
     }
 
-    pub fn get_state(&mut self) -> Vec<usize> {
-        let mut state = Vec::new();
+    pub fn get_state(&mut self) -> u64 {
+        let mut buf_state: Vec<u64> = Vec::new();
         if self.player == Player::P1 {
-            state.push(1);
+            buf_state.push(1);
         }else {
-            state.push(0);
+            buf_state.push(0);
         }
         for (n, dice) in self.dices.iter().enumerate() {
             let buf = self.board.get_dice_position(n+1);
             let dice_position = to_binary(change_48to31(buf[0]*7+buf[1]));
             let dice_info = to_binary(change_diceinfo_31(dice.gettop(), dice.getleft()));
-            state.extend(dice_position);
-            state.extend(dice_info);
+            buf_state.extend(dice_position);
+            buf_state.extend(dice_info);
         }
+        let mut m = "100".to_string();
+        let str_state = buf_state.iter().map(|v| v.to_string()).collect::<Vec<String>>().concat();
+        m.push_str(&str_state);
+        let state = u64::from_str_radix(&m, 2).unwrap();
         return state;
     }
     
@@ -362,7 +368,7 @@ impl Zixza {
     pub fn boardcheck(&mut self) -> BoardState{
         if self.board.getsameboardcount() == 3 {//引き分け
             self.board.setboardstate(BoardState::Finish);
-            println!("draw");//TODO draw
+            // println!("draw");//TODO draw
         }
         self.board.win_check(self.player); //占拠，到達
         let (dice1, dice2) = self.dices.split_at(3);
@@ -515,12 +521,12 @@ fn change_diceinfo_31(top: usize, left: usize) -> usize{
     }
 }
 
-pub fn to_binary(num: usize) -> Vec<usize> {
-    let mut data: Vec<usize> = Vec::new();
-    let mut n = num;
+pub fn to_binary(num: usize) -> Vec<u64> {
+    let mut data: Vec<u64> = Vec::new();
+    let mut n = num as u64;
     match num < 32 {
         true => {
-            for _ in 0..5 as usize{
+            for _ in 0..5 {
                 if n > 1 {
                     data.insert(0, n%2);
                 }else {
@@ -530,7 +536,7 @@ pub fn to_binary(num: usize) -> Vec<usize> {
             }
         }
         false => {
-            for _ in 0..num.ilog2() as usize{
+            for _ in 0..num.ilog2(){
                 data.insert(0, n%2);
                 n /= 2;
             }

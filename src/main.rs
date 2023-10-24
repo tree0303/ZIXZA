@@ -1,16 +1,18 @@
 #![allow(non_snake_case)]
 mod zixza;
+
 use zixza::montecarlo::McAgent;
 use zixza::randomagent::RandomAgent;
 
-use crate::zixza::Zixza;
+use crate::zixza::{Zixza, input_usize};
 
 fn main() {
-    let loopnum = 100000;
+    let loopnum = 1000000;
     let mut game = Zixza::new();
-    let mut _mcagent = McAgent::new();
-    let mut agent = RandomAgent::new();
-    for i in 0..loopnum {
+    let flag = false;
+    if flag{
+        let mut agent = RandomAgent::new();
+        for i in 0..loopnum {
         // game.setup();
         game.reset();
         game.testset();
@@ -21,7 +23,7 @@ fn main() {
             let action = agent.get_action(actions);
             // println!("{}{}{}", action.0, action.1.to_string(), action.2);
             let (next_state, reward, done) = game.step(action);
-            agent.add(state.iter().map(|v| *v as u64).collect(), action, reward);
+            agent.add(state, action, reward);
             // println!("{}", done);
             // let i = input_usize();
             if done {
@@ -34,8 +36,41 @@ fn main() {
         }
         if i%10000==0{ println!("{}",i);}
         // game.show();
+        }
+        agent.q_show();
+    }else{
+        let mut agent = McAgent::new();
+        for i in 0..loopnum {
+            // game.setup();
+            game.reset();
+            game.testset();
+            agent.reset();
+            let mut state = game.get_state();
+            loop {
+                let actions = game.get_actions();
+                let action = agent.get_action(&state, &actions);
+                let (next_state, reward, done) = game.step(action);
+                agent.add(state, action, reward, actions);
+                // println!("{}{}{}", action.0, action.1.to_string(), action.2);
+                // println!("{}", done);
+                // let i = input_usize();
+                if done {
+                    agent.update();
+                    break;
+                }
+                // println!("{:?}", state);
+                state = next_state;
+                
+            }
+            if i%10000==0{ println!("{}",i);agent.q_show(10);}
+            // if i == 0{
+            //     game.show();
+            // }
+            // 
+        }
+        agent.q_show(10);
     }
-    agent.q_show();
+    
 
 
 
