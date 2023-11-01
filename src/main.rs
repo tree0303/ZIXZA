@@ -1,13 +1,16 @@
 #![allow(non_snake_case)]
 mod zixza;
+mod collect_data;
 
+use collect_data::save_q;
 use zixza::montecarlo::McAgent;
 use zixza::randomagent::RandomAgent;
 
 use crate::zixza::{Zixza, input_usize};
+use crate::collect_data::write_data;
 
 fn main() {
-    let loopnum = 1000000;
+    let loopnum = 1;
     let mut game = Zixza::new();
     let flag = false;
     if flag{
@@ -22,7 +25,7 @@ fn main() {
             let actions = game.get_actions();
             let action = agent.get_action(actions);
             // println!("{}{}{}", action.0, action.1.to_string(), action.2);
-            let (next_state, reward, done) = game.step(action);
+            let (next_state, reward, done, how_win) = game.step(action);
             agent.add(state, action, reward);
             // println!("{}", done);
             // let i = input_usize();
@@ -46,16 +49,23 @@ fn main() {
             game.testset();
             agent.reset();
             let mut state = game.get_state();
+            let mut data_buf: Vec<(u64, usize, usize)> = Vec::new();
+            let mut count = 0;
             loop {
+                count += 1;
                 let actions = game.get_actions();
                 let action = agent.get_action(&state, &actions);
-                let (next_state, reward, done) = game.step(action);
+                let (next_state, reward, done, how_win) = game.step(action);
                 agent.add(state, action, reward, actions);
+                data_buf.push((state, count, how_win));
+                save_q(q_get());
                 // println!("{}{}{}", action.0, action.1.to_string(), action.2);
                 // println!("{}", done);
                 // let i = input_usize();
                 if done {
                     agent.update();
+                    write_data(data_buf);
+                    save_q(q_buf);
                     break;
                 }
                 // println!("{:?}", state);

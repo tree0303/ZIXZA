@@ -246,27 +246,32 @@ impl Board {
         }
         dice_position
     }
-    pub fn win_check(&mut self, player: Player) {
+    pub fn win_check(&mut self, player: Player) -> usize{
         let center = vec![[2, 4], [3, 3], [4, 2]];
         let (p2, p1) = (vec![Piece::Dice4, Piece::Dice5, Piece::Dice6], vec![Piece::Dice1, Piece::Dice2, Piece::Dice3]);
         match player {
             Player::P1 => {
                 if p1.iter().any(|w| *w==self.board[center[0][0]][center[0][1]]) && p1.iter().any(|w| *w==self.board[center[1][0]][center[1][1]]) && p1.iter().any(|w| *w==self.board[center[2][0]][center[2][1]]){
                     self.boardstate = BoardState::Finish;
+                    return 2;
                 }
                 if p1.iter().any(|w| *w==self.board[1][1]) {
                     self.boardstate = BoardState::Finish;
+                    return 3;
                 }
             }
             Player::P2 => {
                 if p2.iter().any(|w| *w==self.board[center[0][0]][center[0][1]]) && p2.iter().any(|w| *w==self.board[center[1][0]][center[1][1]]) && p2.iter().any(|w| *w==self.board[center[2][0]][center[2][1]]){
                     self.boardstate = BoardState::Finish;
+                    return 2;
                 }
                 if p2.iter().any(|w| *w==self.board[1][1]) {
                     self.boardstate = BoardState::Finish;
+                    return 3;
                 }
             }
         }
+        return 0;
     }
     pub fn setboardstate(&mut self, boardstate: BoardState) {
         self.boardstate = boardstate;
