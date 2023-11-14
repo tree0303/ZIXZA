@@ -347,7 +347,7 @@ impl Zixza {
         return state;
     }
     
-    pub fn get_actions(&mut self)-> Vec<(usize, DiceMove, usize)> { // action(dice_num, dice_action, attack)
+    pub fn get_actions(&mut self)-> Vec<(u8, DiceMove, u8)> { // action(dice_num, dice_action, attack)
         let mut actions: Vec<(usize, DiceMove, usize)> = Vec::new();
         let (dice1, dice2) = self.dices.split_at(3);
         let player_dice: Vec<Dice> = match self.player {

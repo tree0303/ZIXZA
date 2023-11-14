@@ -24,6 +24,18 @@ impl DiceMove {
             DiceMove::Path => "Path",
         }
     }
+    pub fn to_u8(&self) -> u8{
+        match self {
+            DiceMove::ForwardLeft => 1,
+            DiceMove::ForwardRight => 2,
+            DiceMove::BackwardLeft => 3,
+            DiceMove::BackwardRight => 4,
+            DiceMove::TurnLeft => 5,
+            DiceMove::TurnRight => 6,
+            DiceMove::BeforeMove => 7,
+            DiceMove::Path => 0,
+        }
+    }
 }
 #[derive(Clone, Copy)]
 pub enum BoardState {
