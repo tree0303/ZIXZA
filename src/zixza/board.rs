@@ -37,6 +37,19 @@ impl DiceMove {
         }
     }
 }
+pub fn u8_to_DiceMove(num :u8) -> DiceMove{
+    match num {
+        1 => DiceMove::ForwardLeft,
+        2 => DiceMove::ForwardRight,
+        3 => DiceMove::BackwardLeft,
+        4 => DiceMove::BackwardRight,
+        5 => DiceMove::TurnLeft,
+        6 => DiceMove::TurnRight,
+        7 => DiceMove::BeforeMove,
+        0 => DiceMove::Path,
+        _ => DiceMove::Path,
+    }
+}
 #[derive(Clone, Copy)]
 pub enum BoardState {
     BeforeMatch,

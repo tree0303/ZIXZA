@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use crate::zixza::to_binary;
 use rand::{distributions::WeightedIndex, prelude::Distribution};
-use super::board::DiceMove;
+use super::board::{DiceMove, u8_to_DiceMove};
 #[derive(Eq, Hash, PartialEq, Clone, Copy)]
 struct ActionKey(usize, DiceMove, usize);
 
@@ -51,10 +51,15 @@ impl McAgent {
         let mut rng = rand::thread_rng();
         let dist = WeightedIndex::new(probs).unwrap();
         let choice = actions_vec[dist.sample(&mut rng)];
-        //ここおかしい
-        let action =  actions.iter().find(|(x, y, _)| {
-            (*x, *y) == choice
-        }).unwrap();
+        let action = loop {
+            match actions.into_iter().find(|(x, y, _)| {
+                    (*x, *y) == (choice.0 as usize, u8_to_DiceMove(choice.1))
+                }) {
+                Some(v) => break v,
+                None => continue,
+            }
+        };
+        
         return *action;
     }
 
@@ -101,6 +106,12 @@ impl McAgent {
         // println!("{}", po);
         println!("q {}",self.q.len());
         println!("pi{}", self.pi.len());
+    }
+    pub fn get_pi(&self) -> &HashMap<u64, HashMap<(u8, u8), f32>>{
+        return &self.pi; 
+    }
+    pub fn get_memories(&self) -> &Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >{
+        return &self.memory;
     }
 }
 pub fn greedy_probs(q: &HashMap<(u64, (u8, u8, u8)), f32>, state: u64, actions: &Vec<(u8, u8, u8)>, epsilon: f32) -> HashMap<(u8, u8), f32>{
