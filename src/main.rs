@@ -2,15 +2,14 @@
 mod zixza;
 mod collect_data;
 
-use collect_data::save_q;
+use collect_data::{write_data, save_agemt};
 use zixza::montecarlo::McAgent;
 use zixza::randomagent::RandomAgent;
 
 use crate::zixza::{Zixza, input_usize};
-use crate::collect_data::write_data;
 
 fn main() {
-    let loopnum = 1;
+    let loopnum = 100000;
     let mut game = Zixza::new();
     let flag = false;
     if flag{
@@ -58,27 +57,28 @@ fn main() {
                 let (next_state, reward, done, how_win) = game.step(action);
                 agent.add(state, action, reward, actions);
                 data_buf.push((state, count, how_win));
-                save_q(q_get());
                 // println!("{}{}{}", action.0, action.1.to_string(), action.2);
                 // println!("{}", done);
                 // let i = input_usize();
                 if done {
                     agent.update();
-                    write_data(data_buf);
-                    save_q(q_buf);
                     break;
                 }
                 // println!("{:?}", state);
                 state = next_state;
                 
             }
-            if i%10000==0{ println!("{}",i);agent.q_show(10);}
+            if i%10000==0{ println!("{}",i);}
             // if i == 0{
             //     game.show();
             // }
             // 
+            if i == (loopnum-1) {
+                        write_data(agent.get_memories());
+                        save_agemt(agent.get_pi());
+                    }
         }
-        agent.q_show(10);
+        // agent.q_show(10);
     }
     
 
