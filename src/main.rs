@@ -58,23 +58,24 @@ fn main() {
                 // let i = input_usize();
                 if done {
                     agent.update();
+                    
                     break;
                 }
                 // println!("{:?}", state);
                 state = next_state;
                 
             }
-            if i%10000==0{ println!("{}",i);agent.q_show(10);}
+            if i%10000==0{ println!("{}",i);}
             // if i == 0{
             //     game.show();
             // }
             // 
-            if i == loopnum-1 {
-                write_data(agent.get_memories());
-                save_agemt(agent.get_pi());
-            }
+            if i == (loopnum-1) {
+                        write_data(agent.get_memories());
+                        save_agemt(agent.get_pi());
+                    }
         }
-        agent.q_show(10);
+        // agent.q_show(10);
     }
     
 

@@ -83,7 +83,7 @@ impl McAgent {
             let key = (*state, *action);
             self.q.entry(key).or_insert(0.0);
             self.q.insert(key, self.q.get(&key).cloned().unwrap_or(0.0) + (g - self.q[&key]) * self.alpha);
-            self.pi.insert(*state, greedy_probs(&self.q, *state, actions, self.epsolon));
+            self.pi.insert(*state, greedy_probs(&self.q, *state, actions, self.epsolon, *action));
         }
     }
     pub fn q_show(&self, max_count: usize) {
@@ -114,7 +114,7 @@ impl McAgent {
         return &self.memory;
     }
 }
-pub fn greedy_probs(q: &HashMap<(u64, (u8, u8, u8)), f32>, state: u64, actions: &Vec<(u8, u8, u8)>, epsilon: f32) -> HashMap<(u8, u8), f32>{
+pub fn greedy_probs(q: &HashMap<(u64, (u8, u8, u8)), f32>, state: u64, actions: &Vec<(u8, u8, u8)>, epsilon: f32, action: (u8, u8, u8)) -> HashMap<(u8, u8), f32>{
     let mut qs = HashMap::new();
     let action_size = actions.len();
     for action in actions {
@@ -124,7 +124,7 @@ pub fn greedy_probs(q: &HashMap<(u64, (u8, u8, u8)), f32>, state: u64, actions: 
         }
     }
     let max_num = qs.iter().fold(0.0, |m, (_, &fv)| fv.max(m));
-    let max_action = qs.iter().find(|(&k, &v)| *v == max_num);
+    let max_action: Option<(&&(u8, u8, u8), &&f32)> = qs.iter().find(|(&k, &v)| *v == max_num);
     
     let base_prob = epsilon / action_size as f32;
     let mut action_probs = HashMap::new();
@@ -133,7 +133,7 @@ pub fn greedy_probs(q: &HashMap<(u64, (u8, u8, u8)), f32>, state: u64, actions: 
     }
     match max_action {
         Some((v, _)) => {*action_probs.entry( (v.0, v.1)).or_insert(0.0) += 1.0 - epsilon;},
-        None => println!("errer_max_action"),
+        None => println!(),
     };
     
     return action_probs;

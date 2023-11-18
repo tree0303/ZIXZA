@@ -18,7 +18,7 @@ pub fn write_data(memories: &Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >) 
     let file = match OpenOptions::new()
     .append(true)
     .write(true)
-    .truncate(true)
+    .truncate(false)
     .create(true)
     .open(file_path) {
         Err(e) => panic!("could not create : {}", e),
@@ -52,7 +52,7 @@ pub fn save_agemt(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice
     let file = match OpenOptions::new()
     .append(true)
     .write(true)
-    .truncate(true)
+    .truncate(false)
     .create(true)
     .open(file_path) {
         Err(e) => panic!("could not create : {}", e),
