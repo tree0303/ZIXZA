@@ -194,7 +194,8 @@ impl Zixza {
                 DiceMove::BeforeMove => print!("err"),
                 DiceMove::Path => self.board.sameboard_count(),
             }
-            match self.boardcheck() {
+            let board_check = self.boardcheck();
+            match board_check.0 {
                 BoardState::BeforeMatch => println!("err"),
                 BoardState::InMatch => {
                     self.player = if self.player==Player::P1 {Player::P2} else {Player::P1};
@@ -204,7 +205,7 @@ impl Zixza {
             }
         }
     }
-    pub fn step(&mut self, action: (usize, DiceMove, usize)) -> (u64, isize, bool){ // action(dice_num, dice_action, attack)  next_state, reward, done
+    pub fn step(&mut self, action: (usize, DiceMove, usize)) -> (u64, isize, bool, usize){ // action(dice_num, dice_action, attack)  next_state, reward, done, how_to_win
         // for v in &self.dices {
         //     v.show();
         // }
@@ -212,6 +213,7 @@ impl Zixza {
         self.board.setboardstate(BoardState::InMatch);
         let (dice_num, dice_action, attack) = (action.0, action.1, action.2);
         let mut done = false;
+        let mut win = 0;
         if dice_num == 0{
             self.board.step_count();
             println!("");
@@ -261,15 +263,19 @@ impl Zixza {
                 DiceMove::BeforeMove => print!("err"),
                 DiceMove::Path => self.board.sameboard_count(),
             }
-            match self.boardcheck() {
+            let board_check = self.boardcheck();
+            match board_check.0 {
                 BoardState::BeforeMatch => println!("err"),
                 BoardState::InMatch => {
                     self.player = if self.player==Player::P1 {Player::P2} else {Player::P1};
                     self.board.turnboard();
                 },
-                BoardState::Finish => done = true,
+                BoardState::Finish => {
+                    done = true;
+                    win = board_check.1;
+                },
             }
-            return (0, 0, done);
+            return (0, 0, done, win);
         } else {
             let mut reward: isize = 0;
             match dice_action {
@@ -310,7 +316,8 @@ impl Zixza {
                 DiceMove::BeforeMove => print!("err"),
                 DiceMove::Path => self.board.sameboard_count(),
             }
-            match self.boardcheck() {
+            let board_check = self.boardcheck();
+            match board_check.0 {
                 BoardState::BeforeMatch => println!("err"),
                 BoardState::InMatch => {
                     self.player = if self.player==Player::P1 {Player::P2} else {Player::P1};
@@ -319,10 +326,11 @@ impl Zixza {
                 BoardState::Finish => {
                     reward = REWARD;
                     done = true;
+                    win = board_check.1;
                 },
             }
             let next_state = self.get_state();
-            return (next_state, reward, done);
+            return (next_state, reward, done, win);
         }
     }
 
@@ -365,12 +373,14 @@ impl Zixza {
         return actions;
     }
 
-    pub fn boardcheck(&mut self) -> BoardState{
-        if self.board.getsameboardcount() == 3 {//引き分け
+    pub fn boardcheck(&mut self) -> (BoardState, usize){
+        let mut how_win = 0;
+        if self.board.getsameboardcount() == 3 {//1->引き分け
             self.board.setboardstate(BoardState::Finish);
+            how_win = 1;
             // println!("draw");//TODO draw
         }
-        self.board.win_check(self.player); //占拠，到達
+        how_win = self.board.win_check(self.player); //2->占拠，3->到達
         let (dice1, dice2) = self.dices.split_at(3);
         let enemy_player = if self.player==Player::P1 {Player::P2} else {Player::P1};
         let alive_dice: Vec<Dice> = match enemy_player {
@@ -379,8 +389,9 @@ impl Zixza {
         };
         if alive_dice.iter().len() <= 1 {
             self.board.setboardstate(BoardState::Finish);
+            how_win = 4;//4->攻撃
         }
-        self.board.getboardstate()
+        (self.board.getboardstate(), how_win)
     }
     fn select_dice_move(&mut self) -> (usize, DiceMove, usize){
         let (dice1, dice2) = self.dices.split_at(3);
