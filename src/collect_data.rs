@@ -2,7 +2,7 @@
 use std::{path::Path, fs::{create_dir_all, OpenOptions}, io::{BufWriter, Write}, collections::HashMap};
 
 pub fn write_data(memories: &Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >) {//state, action, reward, actions) 
-    let output_dir = Path::new("data_file");
+    let output_dir = Path::new("../data_file");
     create_dir_all(&output_dir).unwrap();
     let mut number = 0;
     let file_path = loop {
@@ -26,9 +26,9 @@ pub fn write_data(memories: &Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >) 
     };
     let mut w = BufWriter::new(file);
     for (a,(b, c, d),e, actions) in memories {
-        let mut str_buf = format!("{},{},{},{},{},",a,b,c,d,e);
+        let mut str_buf = format!("{},{},{},{},{}",a,b,c,d,e);
         for (f, g, h) in actions {
-            let str = format!("{},{},{}",f,g,h);
+            let str = format!(",{},{},{}",f,g,h);
             str_buf.push_str(&str);
         }
         writeln!(w, "{}", str_buf).unwrap();
@@ -36,7 +36,7 @@ pub fn write_data(memories: &Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >) 
 }
 
 pub fn save_agemt(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice, movement), 確率
-    let output_dir = Path::new("agent_file");
+    let output_dir = Path::new("../agent_file");
     create_dir_all(&output_dir).unwrap();
     let mut number = 0;
     let file_path = loop {
@@ -60,11 +60,13 @@ pub fn save_agemt(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice
     };
     let mut w = BufWriter::new(file);
     for (a, actions) in pi {
-        let mut str_buf = format!("{},,",a);
+        let length = actions.len();
+        let mut str_buf = format!("{},{}",a,length);
         for ((b,c),d) in actions {
-            let str = format!("{},{},{}",b,c,d);
+            let str = format!(",{},{},{}",b,c,d);
             str_buf.push_str(&str);
         }
         writeln!(w, "{}", str_buf).unwrap();
+        println!("{}",str_buf);
     }
 } 

@@ -1,15 +1,18 @@
 #![allow(non_snake_case)]
 mod zixza;
 mod collect_data;
+mod load_agent;
 
 use collect_data::{write_data, save_agemt};
+use load_agent::load_agent;
 use zixza::montecarlo::McAgent;
 use zixza::randomagent::RandomAgent;
 
 use crate::zixza::{Zixza, input_usize};
 
 fn main() {
-    let loopnum = 100000;
+    let pi = load_agent();
+    let loopnum = 1;
     let mut game = Zixza::new();
     let flag = false;
     if flag{
@@ -74,9 +77,9 @@ fn main() {
             // }
             // 
             if i == (loopnum-1) {
-                        write_data(agent.get_memories());
-                        save_agemt(agent.get_pi());
-                    }
+                write_data(agent.get_memories());
+                save_agemt(agent.get_pi());
+            }
         }
         // agent.q_show(10);
     }
