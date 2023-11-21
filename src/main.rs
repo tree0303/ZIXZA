@@ -11,8 +11,8 @@ use zixza::randomagent::RandomAgent;
 use crate::zixza::{Zixza, input_usize};
 
 fn main() {
-    let pi = load_agent();
-    let loopnum = 1;
+    // let pi = load_agent();
+    let loopnum = 2000000;
     let mut game = Zixza::new();
     let flag = false;
     if flag{
@@ -46,7 +46,6 @@ fn main() {
     }else{
         let mut agent = McAgent::new();
         for i in 0..loopnum {
-            // game.setup();
             game.reset();
             game.testset();
             agent.reset();
@@ -60,30 +59,21 @@ fn main() {
                 let (next_state, reward, done, how_win) = game.step(action);
                 agent.add(state, action, reward, actions);
                 data_buf.push((state, count, how_win));
-                // println!("{}{}{}", action.0, action.1.to_string(), action.2);
-                // println!("{}", done);
-                // let i = input_usize();
                 if done {
                     agent.update();
                     break;
                 }
-                // println!("{:?}", state);
                 state = next_state;
                 
             }
             if i%10000==0{ println!("{}",i);}
-            // if i == 0{
-            //     game.show();
-            // }
-            // 
             if i == (loopnum-1) {
                 write_data(agent.get_memories());
                 save_agemt(agent.get_pi());
             }
         }
-        // agent.q_show(10);
     }
-    
+
 
 
 

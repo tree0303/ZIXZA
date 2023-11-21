@@ -113,6 +113,9 @@ impl McAgent {
     pub fn get_memories(&self) -> &Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >{
         return &self.memory;
     }
+    pub fn load(&mut self, load_pi: HashMap<u64,  HashMap<(u8, u8), f32>  >) {
+        self.pi = load_pi;
+    }
 }
 pub fn greedy_probs(q: &HashMap<(u64, (u8, u8, u8)), f32>, state: u64, actions: &Vec<(u8, u8, u8)>, epsilon: f32, action: (u8, u8, u8)) -> HashMap<(u8, u8), f32>{
     let mut qs = HashMap::new();
