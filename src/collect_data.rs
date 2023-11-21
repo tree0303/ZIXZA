@@ -2,7 +2,7 @@
 use std::{path::Path, fs::{create_dir_all, OpenOptions}, io::{BufWriter, Write}, collections::HashMap};
 
 pub fn write_data(memories: &Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >) {//state, action, reward, actions) 
-    let output_dir = Path::new("../data_file");
+    let output_dir = Path::new("../data/data_file");
     create_dir_all(&output_dir).unwrap();
     let mut number = 0;
     let file_path = loop {
@@ -36,7 +36,7 @@ pub fn write_data(memories: &Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >) 
 }
 
 pub fn save_agemt(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice, movement), 確率
-    let output_dir = Path::new("../agent_file");
+    let output_dir = Path::new("../data/agent_file");
     create_dir_all(&output_dir).unwrap();
     let mut number = 0;
     let file_path = loop {
