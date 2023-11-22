@@ -205,6 +205,19 @@ impl Zixza {
             }
         }
     }
+    pub fn select_action(&mut self) -> (usize, DiceMove, usize){
+        self.board.step_count();
+        println!("");
+        println!("turn_count {}", self.board.getsteps());
+        println!("Player: {}",self.player.to_string());
+        println!("dice [top,left right]");
+        for v in &self.dices {
+            v.show();
+        }
+        self.board.show();
+        let action = self.select_dice_move();
+        return action;
+    }
     pub fn step(&mut self, action: (usize, DiceMove, usize)) -> (u64, isize, bool, usize){ // action(dice_num, dice_action, attack)  next_state, reward, done, how_to_win
         // for v in &self.dices {
         //     v.show();

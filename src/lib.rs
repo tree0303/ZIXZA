@@ -7,7 +7,7 @@ mod zixza;
 mod collect_data;
 
 pub fn game_start() {
-    let pi = load_agent().expect("could not load agent");
+    let pi = load_agent();
     let mut game = Zixza::new();
     let mut agent = McAgent::new();
     game.reset();
@@ -46,7 +46,7 @@ pub fn game_start() {
 
 #[wasm_bindgen]
 pub fn start() -> u64{
-    let pi = load_agent().expect("could not load agent");
+    let pi = load_agent();
     let mut game = Zixza::new();
     let mut agent = McAgent::new();
     game.reset();

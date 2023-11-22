@@ -41,7 +41,7 @@ pub fn save_agemt(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice
     let mut number = 0;
     let file_path = loop {
         number+=1;
-        let file_name = format!("agent_set{}.csv",number);
+        let file_name = format!("agent_set{}.txt",number);
         let path = output_dir.join(file_name);
         if path.is_file() {
             continue;
@@ -67,6 +67,6 @@ pub fn save_agemt(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice
             str_buf.push_str(&str);
         }
         writeln!(w, "{}", str_buf).unwrap();
-        println!("{}",str_buf);
+        // println!("{}",str_buf);
     }
 } 

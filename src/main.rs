@@ -5,14 +5,13 @@ mod load_agent;
 
 use collect_data::{write_data, save_agemt};
 use load_agent::load_agent;
-use zixza::montecarlo::McAgent;
+use zixza::{montecarlo::McAgent, board::DiceMove};
 use zixza::randomagent::RandomAgent;
 
 use crate::zixza::{Zixza, input_usize};
 
-fn main() {
-    // let pi = load_agent();
-    let loopnum = 2000000;
+fn get_data_in_agent() {
+    let loopnum = 100000;
     let mut game = Zixza::new();
     let flag = false;
     if flag{
@@ -92,4 +91,42 @@ fn main() {
     // // game.setplayertype(zixza::PlayerType::MonteCarlo, zixza::PlayerType::MonteCarlo);
     
     // // game.start();
+}
+
+fn mc_vs_player() {
+    let mut game = Zixza::new();
+    let pi = load_agent();
+    let mut agent = McAgent::new();
+    game.reset();
+    game.testset();
+    agent.reset();
+    agent.load(pi);
+    let mut player = true;
+    let mut inmatch = false;
+    let mut state = game.get_state();
+    loop {
+        let actions = game.get_actions();
+        if player {
+            let action = game.select_action();
+            let (next_state, reward, done, how_to_win) = game.step(action);
+            inmatch = done;
+            agent.add(state, action, reward, actions);
+            state = next_state;
+
+        }else {
+            let action = agent.get_action(&state, &actions);
+            let (next_state, reward, done, how_to_win) = game.step(action);
+            inmatch = done;
+            agent.add(state, action, reward, actions);
+            state = next_state;
+        }
+        if inmatch{
+            break;
+        }
+        player = if player {false} else {true};
+    }
+}
+fn main() {
+    mc_vs_player();
+    // get_data_in_agent();
 }
