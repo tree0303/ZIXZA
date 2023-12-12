@@ -10,8 +10,10 @@ use zixza::randomagent::RandomAgent;
 
 use crate::zixza::{Zixza, input_usize};
 
+const LOOPNUM: usize = 100000;
+
 fn get_data_in_agent() {
-    let loopnum = 100000;
+    let loopnum = LOOPNUM;
     let mut game = Zixza::new();
     let flag = false;
     if flag{
@@ -127,6 +129,12 @@ fn mc_vs_player() {
     }
 }
 fn main() {
-    mc_vs_player();
-    // get_data_in_agent();
+    println!("entry");
+    let a = input_usize();
+    if a > 1 {
+        get_data_in_agent();
+    }else {
+        mc_vs_player();
+    }
+    //
 }

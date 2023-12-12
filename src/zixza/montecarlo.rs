@@ -12,10 +12,11 @@ pub struct McAgent {
     q: HashMap<(u64, (u8, u8, u8)), f32>, // state, action, 評価
     memory: Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >,//state, action, reward, actions
     pi: HashMap<u64,  HashMap<(u8, u8), f32>  >, // state, (dice, movement), 確率
+    state_num: HashMap<u64, u64>,
 }
 impl McAgent {
     pub fn new() -> Self {
-        Self { gamma: 0.9, epsolon: 0.3, alpha: 0.1, q: HashMap::new(), memory: Vec::new(), pi: HashMap::new() }
+        Self { gamma: 0.9, epsolon: 0.3, alpha: 0.1, q: HashMap::new(), memory: Vec::new(), pi: HashMap::new(), state_num: HashMap::new() }
     }
     pub fn get_action(&mut self, state: &u64, actions: &Vec<(usize, DiceMove, usize)>) -> (usize, DiceMove, usize) { // dice_num, dice_action, attack
         if actions.len() == 0{
@@ -79,11 +80,15 @@ impl McAgent {
             count*=-1;
             if count == -1 {continue;}
             let (state, action, reward, actions) = data;
-            g = self.gamma * g + *reward as f32;
+            let r = 5.0;
+            // g = self.gamma * g + *reward as f32;
+            g = self.gamma * g + r as f32;
             let key = (*state, *action);
             self.q.entry(key).or_insert(0.0);
             self.q.insert(key, self.q.get(&key).cloned().unwrap_or(0.0) + (g - self.q[&key]) * self.alpha);
             self.pi.insert(*state, greedy_probs(&self.q, *state, actions, self.epsolon, *action));
+
+            *self.state_num.entry(*state).or_insert(0) += 1;
         }
     }
     pub fn q_show(&self, max_count: usize) {
@@ -116,6 +121,13 @@ impl McAgent {
     pub fn load(&mut self, load_pi: HashMap<u64,  HashMap<(u8, u8), f32>  >) {
         self.pi = load_pi;
     }
+
+    pub fn renewal_state(&mut self, loopnum: usize){
+        for (k, v) in self.state_num.iter(){
+            
+        }
+    }
+
 }
 pub fn greedy_probs(q: &HashMap<(u64, (u8, u8, u8)), f32>, state: u64, actions: &Vec<(u8, u8, u8)>, epsilon: f32, action: (u8, u8, u8)) -> HashMap<(u8, u8), f32>{
     let mut qs = HashMap::new();
