@@ -35,7 +35,7 @@ pub fn write_data(memories: &Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >) 
     }
 }
 
-pub fn save_agemt(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice, movement), 確率
+pub fn save_agent(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice, movement), 確率
     let output_dir = Path::new("../data/agent_file");
     create_dir_all(&output_dir).unwrap();
     let mut number = 0;
@@ -66,6 +66,7 @@ pub fn save_agemt(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice
             let str = format!(",{},{},{}",b,c,d);
             str_buf.push_str(&str);
         }
+        // state, actions_size, actions<dice, move, prob>
         writeln!(w, "{}", str_buf).unwrap();
         // println!("{}",str_buf);
     }

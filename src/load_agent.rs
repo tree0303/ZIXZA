@@ -4,7 +4,7 @@ use csv::Error;
 
 pub fn load_agent() -> HashMap<u64,  HashMap<(u8, u8), f32> > {
     let mut pi: HashMap<u64, HashMap<(u8, u8), f32>> = HashMap::new();
-    let input_dir = Path::new("../data/agent_file");
+    let input_dir = Path::new("agent_file");
     let file_name = "agent_set1.txt";
     let path = input_dir.join(file_name);
     let file_path = match path.is_file() {

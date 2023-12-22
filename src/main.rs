@@ -3,7 +3,7 @@ mod zixza;
 mod collect_data;
 mod load_agent;
 
-use collect_data::{write_data, save_agemt};
+use collect_data::{write_data, save_agent};
 use load_agent::load_agent;
 use zixza::{montecarlo::McAgent, board::DiceMove};
 use zixza::randomagent::RandomAgent;
@@ -11,7 +11,7 @@ use zixza::randomagent::RandomAgent;
 use crate::zixza::{Zixza, input_usize};
 
 fn get_data_in_agent() {
-    let loopnum = 100000;
+    let loopnum = 2000000;
     let mut game = Zixza::new();
     let flag = false;
     if flag{
@@ -68,29 +68,11 @@ fn get_data_in_agent() {
             if i%10000==0{ println!("{}",i);}
             if i == (loopnum-1) {
                 write_data(agent.get_memories());
-                save_agemt(agent.get_pi());
+                save_agent(agent.get_pi());
             }
         }
     }
 
-
-
-
-    // let mut game = Zixza::new();
-    // let mut agent = McAgent::new();
-    // game.setup();
-    // let state = game.get_state();
-    // let mut done = false;
-    // while !done {
-    //     let next_state;
-    //     let reward;
-    //     // let action = (0,DiceMove::BackwardLeft,0);
-    //     // let action = agent.get_actions(game.get_actions());
-    //     (next_state, reward, done) = game.step(action);
-    // }
-    // // game.setplayertype(zixza::PlayerType::MonteCarlo, zixza::PlayerType::MonteCarlo);
-    
-    // // game.start();
 }
 
 fn mc_vs_player() {
@@ -126,7 +108,39 @@ fn mc_vs_player() {
         player = if player {false} else {true};
     }
 }
+fn first_code(){
+    let mut game = Zixza::new();
+    game.setup();
+    game.start();
+}
+fn second_code(){
+    let mut game = Zixza::new();
+    game.reset();
+    game.testset();
+    let mut inmatch = false;
+    let mut state = game.get_state();
+    loop {
+        let action = game.select_dice_and_action();
+        let (next_state, reward, done, how_to_win) = game.step(action);
+        inmatch = done;
+        state = next_state;
+        if inmatch{
+            break;
+        }
+    }
+}
+
 fn main() {
-    mc_vs_player();
+    let a = input_usize();
+    if a == 1{
+        get_data_in_agent();
+    }else if a == 2{
+        mc_vs_player();
+    }else if a == 3{
+        first_code();
+    }else {
+        second_code();
+    }
+    //mc_vs_player();
     // get_data_in_agent();
 }

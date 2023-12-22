@@ -44,6 +44,7 @@ impl Zixza {
         self.board.putdice([5, 5], Player::P2, 2);
         self.board.putdice([6, 4], Player::P2, 3);
         if self.player==Player::P1 {self.board.turnboard();}
+        self.board.step_count();
     }
     #[allow(dead_code)]
     pub fn show(&self) {
@@ -103,6 +104,7 @@ impl Zixza {
             }
         }
         self.dices.extend(p2_dices);
+        self.board.setboardstate(BoardState::InMatch);
 
         fn gendice(player: Player, num: usize, top: usize) -> Dice {
             println!("{}", player.to_string());
@@ -206,7 +208,6 @@ impl Zixza {
         }
     }
     pub fn select_action(&mut self) -> (usize, DiceMove, usize){
-        self.board.step_count();
         println!("");
         println!("turn_count {}", self.board.getsteps());
         println!("Player: {}",self.player.to_string());
@@ -227,8 +228,8 @@ impl Zixza {
         let (dice_num, dice_action, attack) = (action.0, action.1, action.2);
         let mut done = false;
         let mut win = 0;
+        self.board.step_count();
         if dice_num == 0{
-            self.board.step_count();
             println!("");
             println!("turn_count {}", self.board.getsteps());
             println!("Player: {}",self.player.to_string());
@@ -357,14 +358,19 @@ impl Zixza {
         for (n, dice) in self.dices.iter().enumerate() {
             let buf = self.board.get_dice_position(n+1);
             let dice_position = to_binary(change_48to31(buf[0]*7+buf[1]));
+            // println!("dice{}",n+1);
+            // println!("{}",buf[0]*7+buf[1]);
+            // println!("{}",change_48to31(buf[0]*7+buf[1]));
             let dice_info = to_binary(change_diceinfo_31(dice.gettop(), dice.getleft()));
             buf_state.extend(dice_position);
             buf_state.extend(dice_info);
         }
-        let mut m = "100".to_string();
+        // println!("{:?}",buf_state);
+        let mut m = "1".to_string();
         let str_state = buf_state.iter().map(|v| v.to_string()).collect::<Vec<String>>().concat();
         m.push_str(&str_state);
         let state = u64::from_str_radix(&m, 2).unwrap();
+        // println!("{}",state);
         return state;
     }
     
@@ -432,6 +438,30 @@ impl Zixza {
             }
         };
         return (dice_num, dicemove, attack);
+    }
+    pub fn select_dice_and_action(&mut self) -> (usize, DiceMove, usize){
+        println!("");
+        println!("turn_count {}", self.board.getsteps());
+        println!("Player: {}",self.player.to_string());
+        println!("dice [top,left right]");
+        for v in &self.dices {
+            v.show();
+        }
+        self.board.show();
+        let actions = self.get_actions();
+        println!("Choose dice_action from");
+        println!("id: dice_num, action");
+        let action = loop {
+            for (i, (n, v)) in actions.iter().map(|f| (f.0, f.1)).enumerate() {
+                println!("{}: {}, {}", i+1, n, v.to_string());
+            }
+            let input = input_usize(); // 動かし方の選択
+            if input > 0 && input <= actions.len() {
+                break actions[input];
+            }
+        };
+        
+        return action;
     }
     
 }
@@ -547,24 +577,38 @@ fn change_diceinfo_31(top: usize, left: usize) -> usize{
 
 pub fn to_binary(num: usize) -> Vec<u64> {
     let mut data: Vec<u64> = Vec::new();
-    let mut n = num as u64;
-    match num < 32 {
-        true => {
-            for _ in 0..5 {
-                if n > 1 {
-                    data.insert(0, n%2);
-                }else {
-                    data.insert(0, 0);
-                }
-                n /= 2;
-            }
+    let mut num = num as u64;
+    // match num < 32 {
+    //     true => {
+    //         for _ in 0..5 {
+    //             if n > 1 {
+    //                 data.insert(0, n%2);
+    //             }else {
+    //                 data.insert(0, 0);
+    //             }
+    //             n /= 2;
+    //         }
+    //     }
+    //     false => {
+    //         for _ in 0..num.ilog2(){
+    //             data.insert(0, n%2);
+    //             n /= 2;
+    //         }
+    //     }
+    // }
+    loop {
+        data.push(num%2);
+        if num == 1 || num == 0{
+            break;
         }
-        false => {
-            for _ in 0..num.ilog2(){
-                data.insert(0, n%2);
-                n /= 2;
-            }
+        num /= 2;
+    }
+    loop {
+        if data.len() < 5 {
+            data.push(0);
+        }else {
+            break;
         }
     }
-    return data;
+    return data.into_iter().rev().collect::<Vec<u64>>();
 }
