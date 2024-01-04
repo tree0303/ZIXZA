@@ -1,5 +1,5 @@
-use std::collections::HashMap;
-use crate::zixza::to_binary;
+use std::{collections::HashMap, io};
+use crate::zixza::{to_binary, input_usize};
 use rand::{distributions::WeightedIndex, prelude::Distribution};
 use super::board::{DiceMove, u8_to_DiceMove};
 #[derive(Eq, Hash, PartialEq, Clone, Copy)]
@@ -12,11 +12,13 @@ pub struct McAgent {
     q: HashMap<(u64, (u8, u8, u8)), f32>, // state, action, 評価
     memory: Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >,//state, action, reward, actions
     pi: HashMap<u64,  HashMap<(u8, u8), f32>  >, // state, (dice, movement), 確率
-    state_num: HashMap<u64, u64>,
+    loopnum: usize,
+    decrease: bool,
+    beta: f32,
 }
 impl McAgent {
     pub fn new() -> Self {
-        Self { gamma: 0.9, epsolon: 0.3, alpha: 0.1, q: HashMap::new(), memory: Vec::new(), pi: HashMap::new(), state_num: HashMap::new() }
+        Self { gamma: 0.9, epsolon: 0.3, alpha: 0.1, q: HashMap::new(), memory: Vec::new(), pi: HashMap::new(), loopnum: 0, decrease: false, beta: 0.0 }
     }
     pub fn get_action(&mut self, state: &u64, actions: &Vec<(usize, DiceMove, usize)>) -> (usize, DiceMove, usize) { // dice_num, dice_action, attack
         if actions.len() == 0{
@@ -88,7 +90,6 @@ impl McAgent {
             self.q.insert(key, self.q.get(&key).cloned().unwrap_or(0.0) + (g - self.q[&key]) * self.alpha);
             self.pi.insert(*state, greedy_probs(&self.q, *state, actions, self.epsolon, *action));
 
-            *self.state_num.entry(*state).or_insert(0) += 1;
         }
     }
     pub fn q_show(&self, max_count: usize) {
@@ -122,12 +123,63 @@ impl McAgent {
         self.pi = load_pi;
     }
 
-    pub fn renewal_state(&mut self, loopnum: usize){
-        for (k, v) in self.state_num.iter(){
-            
+    pub fn param_set(&mut self, loopnum: usize){
+        fn input_f32() -> f32 {
+            let mut input = String::new();
+            'input: loop {
+                match io::stdin().read_line(&mut input) {
+                    Ok(_) => {
+                        match input.trim().parse::<f32>() {
+                            Ok(n) => break n,
+                            Err(_) => {
+                                println!("again");
+                                input = "".to_string();
+                                continue 'input;
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        println!("again");
+                        input = "".to_string();
+                        continue 'input;
+                    }
+                };
+            }
         }
+        println!("change param?");
+        let input = loop {
+            println!("input 0:false, 1:true");
+            let a = input_usize();
+            match a {
+                0 => break false,
+                1 => break true,
+                _ => continue,
+            }
+        };
+        println!("input alpha");
+        let input = input_f32();
+        self.alpha = input;
+        println!("input gamma");
+        let input = input_f32();
+        self.gamma = input;
+        println!("input decrease");
+        let input = loop {
+            println!("input 0:false, 1:true");
+            let a = input_usize();
+            match a {
+                0 => break false,
+                1 => break true,
+                _ => continue,
+            }
+        };
+        self.decrease = input;
+        if self.decrease {
+            println!("input beta");
+            let input = input_f32();
+            self.beta = input;
+        }
+        self.loopnum = loopnum;
     }
-
 }
 pub fn greedy_probs(q: &HashMap<(u64, (u8, u8, u8)), f32>, state: u64, actions: &Vec<(u8, u8, u8)>, epsilon: f32, action: (u8, u8, u8)) -> HashMap<(u8, u8), f32>{
     let mut qs = HashMap::new();
@@ -161,3 +213,4 @@ pub fn greedy_probs(q: &HashMap<(u64, (u8, u8, u8)), f32>, state: u64, actions: 
 4 TurnLeft
 5 TurnRight
  */
+

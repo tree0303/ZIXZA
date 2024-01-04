@@ -50,6 +50,8 @@ fn get_data_in_agent() {
             game.reset();
             game.testset();
             agent.reset();
+            agent.param_set(loopnum);
+            
             let mut state = game.get_state();
             let mut data_buf: Vec<(u64, usize, usize)> = Vec::new();
             let mut count = 0;
