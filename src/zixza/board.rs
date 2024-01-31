@@ -213,6 +213,7 @@ impl Board {
                 dicemoves.push((DiceMove::BackwardRight, 6));
             }
         }
+        // TODO 回転
         // if beforemove != (dice_num, DiceMove::TurnRight) && self.sameboardcount < 2 {dicemoves.push((DiceMove::TurnLeft, 6));}
         // if beforemove != (dice_num, DiceMove::TurnLeft) && self.sameboardcount < 2 {dicemoves.push((DiceMove::TurnRight, 6));}
         dicemoves // attack 012345 non6

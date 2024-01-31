@@ -14,6 +14,7 @@ const REWARD: isize = 5;
 
 pub struct Zixza {
     player: Player,
+    first: Player,
     board: Board,
     dices: Vec<Dice>,
 }
@@ -21,7 +22,10 @@ pub struct Zixza {
 impl Zixza {
     pub fn new() -> Self {
         let board = Board::new();
-        Self { player: Player::P1, board: board, dices: (Vec::new())}
+        Self { player: Player::P1, first: Player::P1, board: board, dices: (Vec::new())}
+    }
+    pub fn get_steps(&self)->usize{
+        self.board.getsteps()
     }
     pub fn testset(&mut self) {
         let alive = 1;
@@ -44,6 +48,7 @@ impl Zixza {
         self.board.putdice([5, 5], Player::P2, 2);
         self.board.putdice([6, 4], Player::P2, 3);
         if self.player==Player::P1 {self.board.turnboard();}
+        self.first = Player::P2;
         self.board.step_count();
     }
     #[allow(dead_code)]
@@ -96,8 +101,10 @@ impl Zixza {
                     self.player = if top1[0] > top2[0] {Player::P1} else {Player::P2};
                 } else if top1.iter().sum::<usize>() > top2.iter().sum() {
                     self.player = Player::P1;
+                    self.first = Player::P1;
                 } else { 
                     self.player = Player::P2;
+                    self.first = Player::P2;
                 }
                 if self.player==Player::P1 {self.board.turnboard();}
                 break;
@@ -348,6 +355,67 @@ impl Zixza {
         }
     }
 
+    pub fn learn_get_state(&mut self) -> u64 {
+        let mut buf_state: Vec<u64> = Vec::new();
+        let mut posi_info: Vec<(usize, usize)> = Vec::new();
+        let mut posi_info2: Vec<(usize, usize)> = Vec::new();
+        for (n, dice) in self.dices.iter().enumerate() {
+            let buf = self.board.get_dice_position(n+1);
+            let dice_position = change_48to31(buf[0]*7+buf[1]);
+            let dice_info = change_diceinfo_31(dice.gettop(), dice.getleft());
+
+            if self.first == Player::P1{//先手がP1のとき
+                match self.player {
+                    Player::P1 => {//playerが先手のとき（P1）
+                        if n <= 2 {
+                            posi_info.push((dice_position, dice_info));//手前プレイヤーのダイスP1
+                        }else {
+                            posi_info2.push((dice_position, dice_info));//奥プレイヤーのダイスP2
+                        }
+                    },
+                    Player::P2 => {//playerが後攻のとき（P2）
+                        if n >= 2 {
+                            posi_info.push((dice_position, dice_info));//手前プレイヤーのダイスP2
+                        }else {
+                            posi_info2.push((dice_position, dice_info));//奥プレイヤーのダイスP1
+                        }
+                    }
+                }
+            }else {//先手がP2のとき
+                match self.player {
+                    Player::P1 => {//playerが後攻のとき（P1）
+                        if n >= 2 {
+                            posi_info.push((dice_position, dice_info));//手前プレイヤーのダイスP2
+                        }else {
+                            posi_info2.push((dice_position, dice_info));//奥プレイヤーのダイスP1
+                        }
+                    },
+                    Player::P2 => {//playerが先攻のとき（P2）
+                        if n <= 2 {
+                            posi_info.push((dice_position, dice_info));//手前プレイヤーのダイスP1
+                        }else {
+                            posi_info2.push((dice_position, dice_info));//奥プレイヤーのダイスP2
+                        }
+                    }
+                }
+            }
+            
+            
+        }
+        posi_info.sort_by(|a, b| a.0.partial_cmp(&(b.0)).unwrap());
+        posi_info2.sort_by(|a, b| a.0.partial_cmp(&(b.0)).unwrap());
+        posi_info.extend(posi_info2);
+        for f in posi_info{
+            buf_state.extend(to_binary(f.0));
+            buf_state.extend(to_binary(f.1));
+        }
+        let mut m = "1".to_string();
+        let str_state = buf_state.iter().map(|v| v.to_string()).collect::<Vec<String>>().concat();
+        m.push_str(&str_state);
+        let state = u64::from_str_radix(&m, 2).unwrap();
+        return state;
+    }
+
     pub fn get_state(&mut self) -> u64 {
         let mut buf_state: Vec<u64> = Vec::new();
         if self.player == Player::P1 {
@@ -457,7 +525,7 @@ impl Zixza {
             }
             let input = input_usize(); // 動かし方の選択
             if input > 0 && input <= actions.len() {
-                break actions[input];
+                break actions[input-1];
             }
         };
         
@@ -571,7 +639,7 @@ fn change_diceinfo_31(top: usize, left: usize) -> usize{
             5 => 23,
             _ => 24, //error
         },
-        _ => 0 //error
+        _ => 31 //error
     }
 }
 

@@ -7,18 +7,20 @@ struct ActionKey(usize, DiceMove, usize);
 
 pub struct McAgent {
     gamma: f32,
-    epsolon: f32,
+    epsilon: f32,
     alpha: f32,
     q: HashMap<(u64, (u8, u8, u8)), f32>, // state, action, 評価
     memory: Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >,//state, action, reward, actions
     pi: HashMap<u64,  HashMap<(u8, u8), f32>  >, // state, (dice, movement), 確率
-    loopnum: usize,
+    loopcount: usize,
     decrease: bool,
-    beta: f32,
+    alpha_beta: f32,
+    gamma_beta: f32,
+    epsilon_beta: f32,
 }
 impl McAgent {
     pub fn new() -> Self {
-        Self { gamma: 0.9, epsolon: 0.3, alpha: 0.1, q: HashMap::new(), memory: Vec::new(), pi: HashMap::new(), loopnum: 0, decrease: false, beta: 0.0 }
+        Self { gamma: 0.9, epsilon: 0.3, alpha: 0.1, q: HashMap::new(), memory: Vec::new(), pi: HashMap::new(), loopcount: 0, decrease: false, alpha_beta: 0.0, gamma_beta: 0.0, epsilon_beta: 0.0 }
     }
     pub fn get_action(&mut self, state: &u64, actions: &Vec<(usize, DiceMove, usize)>) -> (usize, DiceMove, usize) { // dice_num, dice_action, attack
         if actions.len() == 0{
@@ -77,19 +79,39 @@ impl McAgent {
     
     pub fn update(&mut self) {
         let mut g = 0.0;
+        let mut reward_flag = true;
         let mut count = -1;
+        let mut alpha = self.alpha;
+        let mut gamma = self.gamma;
+        let mut epsilon = self.epsilon;
+
+        if self.decrease {
+            self.loopcount += 1;
+            alpha = self.alpha / (1.0 + self.alpha_beta * self.loopcount as f32);
+            gamma = self.gamma / (1.0 + self.gamma_beta * self.loopcount as f32);
+            epsilon = self.gamma / (1.0 + self.gamma_beta * self.loopcount as f32);
+        }
+        // if self.loopcount%100000 == 0 {
+        //     println!("alpha:{}",alpha);
+        //     println!("gamma:{}",gamma);
+        //     println!("epsilon:{}",epsilon);
+        // }
         for data in self.memory.iter().rev() {
             count*=-1;
             if count == -1 {continue;}
             let (state, action, reward, actions) = data;
-            let r = 5.0;
+            // let r = 5.0;
             // g = self.gamma * g + *reward as f32;
-            g = self.gamma * g + r as f32;
+            // g = gamma * g + *reward as f32;
+            g = if reward_flag {gamma * g + 5.0} else {gamma * g + 1.0};
+            // if self.loopcount%100000 == 0{
+            //     println!("g:{}",g);
+            // }
             let key = (*state, *action);
-            self.q.entry(key).or_insert(0.0);
-            self.q.insert(key, self.q.get(&key).cloned().unwrap_or(0.0) + (g - self.q[&key]) * self.alpha);
-            self.pi.insert(*state, greedy_probs(&self.q, *state, actions, self.epsolon, *action));
-
+            self.q.entry(key).or_insert(0.0); //キーがない場合挿入
+            self.q.insert(key, self.q.get(&key).cloned().unwrap_or(0.0) + (g - self.q.get(&key).cloned().unwrap()) * alpha);
+            self.pi.insert(*state, greedy_probs(&self.q, *state, actions, epsilon, *action));
+            reward_flag = false;
         }
     }
     pub fn q_show(&self, max_count: usize) {
@@ -156,12 +178,16 @@ impl McAgent {
                 _ => continue,
             }
         };
-        println!("input alpha");
+        println!("input alpha(学習率)");
         let input = input_f32();
         self.alpha = input;
-        println!("input gamma");
+        println!("input gamma(割引率)");
         let input = input_f32();
         self.gamma = input;
+        println!("input epsilon");
+        let input = input_f32();
+        self.epsilon = input;
+        
         println!("input decrease");
         let input = loop {
             println!("input 0:false, 1:true");
@@ -174,15 +200,20 @@ impl McAgent {
         };
         self.decrease = input;
         if self.decrease {
-            println!("input beta");
+            println!("input alpha_beta");
             let input = input_f32();
-            self.beta = input;
+            self.alpha_beta = input;
+            println!("input gamma_beta");
+            let input = input_f32();
+            self.gamma_beta = input;
+            println!("input epsilon_beta");
+            let input = input_f32();
+            self.epsilon_beta = input;
         }
-        self.loopnum = loopnum;
     }
 }
-pub fn greedy_probs(q: &HashMap<(u64, (u8, u8, u8)), f32>, state: u64, actions: &Vec<(u8, u8, u8)>, epsilon: f32, action: (u8, u8, u8)) -> HashMap<(u8, u8), f32>{
-    let mut qs = HashMap::new();
+pub fn greedy_probs(q: &HashMap<(u64, (u8, u8, u8)), f32>, state: u64, actions: &Vec<(u8, u8, u8)>, epsilon: f32, a: (u8, u8, u8)) -> HashMap<(u8, u8), f32>{
+    let mut qs: HashMap<&(u8, u8, u8), &f32> = HashMap::new();
     let action_size = actions.len();
     for action in actions {
         let key = (state, *action);
@@ -190,19 +221,27 @@ pub fn greedy_probs(q: &HashMap<(u64, (u8, u8, u8)), f32>, state: u64, actions: 
             qs.insert(action, v);
         }
     }
+    
     let max_num = qs.iter().fold(0.0, |m, (_, &fv)| fv.max(m));
-    let max_action: Option<(&&(u8, u8, u8), &&f32)> = qs.iter().find(|(&k, &v)| *v == max_num);
+    let max_action: Option<(&&(u8, u8, u8), &&f32)> =  if qs.iter().filter(|(_, &&f)| f==max_num).count() == 1 {
+        qs.iter().find(|(&k, &v)| *v == max_num)
+    } else {None};
+
     
     let base_prob = epsilon / action_size as f32;
     let mut action_probs = HashMap::new();
     for action in actions.iter() {
         action_probs.insert((action.0, action.1), base_prob);
     }
-    match max_action {
-        Some((v, _)) => {*action_probs.entry( (v.0, v.1)).or_insert(0.0) += 1.0 - epsilon;},
-        None => println!(),
-    };
+    // match max_action {
+    //     Some((v, _)) => {*action_probs.entry( (v.0, v.1)).or_insert(0.0) += 1.0 - epsilon;},
+    //     None => println!("max_none {:?},   {:?},   {:?}", qs, actions, a),
+    // };
     
+    if let Some((v,_)) = max_action {
+        *action_probs.entry( (v.0, v.1)).or_insert(0.0) += 1.0 - epsilon;
+    }
+
     return action_probs;
 }
 /*

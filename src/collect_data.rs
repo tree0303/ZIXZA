@@ -2,7 +2,7 @@
 use std::{path::Path, fs::{create_dir_all, OpenOptions}, io::{BufWriter, Write}, collections::HashMap};
 
 pub fn write_data(memories: &Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >) {//state, action, reward, actions) 
-    let output_dir = Path::new("../data/data_file");
+    let output_dir = Path::new("../data_new/data_file");
     create_dir_all(&output_dir).unwrap();
     let mut number = 0;
     let file_path = loop {
@@ -36,7 +36,7 @@ pub fn write_data(memories: &Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >) 
 }
 
 pub fn save_agent(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice, movement), 確率
-    let output_dir = Path::new("../data/agent_file");
+    let output_dir = Path::new("../data_new/agent_file");
     create_dir_all(&output_dir).unwrap();
     let mut number = 0;
     let file_path = loop {
@@ -59,11 +59,11 @@ pub fn save_agent(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice
         Ok(v) => v,
     };
     let mut w = BufWriter::new(file);
-    for (a, actions) in pi {
+    for (state, actions) in pi {
         let length = actions.len();
-        let mut str_buf = format!("{},{}",a,length);
-        for ((b,c),d) in actions {
-            let str = format!(",{},{},{}",b,c,d);
+        let mut str_buf = format!("{},{}",state,length);
+        for ((d,d_move),prob) in actions {
+            let str = format!(",{},{},{}",d,d_move,prob);
             str_buf.push_str(&str);
         }
         // state, actions_size, actions<dice, move, prob>
@@ -71,3 +71,135 @@ pub fn save_agent(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice
         // println!("{}",str_buf);
     }
 } 
+
+pub fn mc_vs_random_data(filename: &str, buf: Vec<(bool, bool, &str, usize)>) {//first, mc_win, how, steps
+    println!("write");
+    let model_num = filename.chars().filter_map(|f| f.to_string().parse().ok()).collect::<Vec<u32>>()[0];
+    let output_dir = Path::new("../data_new/mc_vs_random");
+    create_dir_all(&output_dir).unwrap();
+    let mut number = 0;
+    let file_path = loop {
+        number+=1;
+        let file_name = format!("vs{}_data{}.csv",model_num,number);
+        let path = output_dir.join(file_name);
+        if path.is_file() {
+            continue;
+        }else {
+            break path;
+        }
+    };
+    let file = match OpenOptions::new()
+    .append(true)
+    .write(true)
+    .truncate(false)
+    .create(true)
+    .open(file_path) {
+        Err(e) => panic!("could not create : {}", e),
+        Ok(v) => v,
+    };
+    let mut w = BufWriter::new(file);
+    writeln!(w,"mc_win,how,steps").unwrap();
+    for (first, mc_win, how, steps) in buf {
+        let str = if first {"first"}else {"second"};
+        let mut str_buf = format!("{},{},{}",mc_win, how, steps);
+        writeln!(w, "{}", str_buf).unwrap();
+    }
+}
+
+pub fn mc_vs_random_data_2(filename: &str,mc_win: bool, how: &str, steps: usize) {//first, mc_win, how, steps
+    println!("write");
+    let model_num = filename.chars().filter_map(|f| f.to_string().parse().ok()).collect::<Vec<u32>>()[0];
+    let output_dir = Path::new("../data_new/mc_vs_random_ex");
+    create_dir_all(&output_dir).unwrap();
+    let mut number = 0;
+    let file_path = loop {
+        number+=1;
+        let file_name = format!("vs{}_data_exx.csv",model_num);
+        let path = output_dir.join(file_name);
+        // if path.is_file() {
+        //     break path;
+        // }else {
+        //     continue;
+        // }
+        break path;
+    };
+    let file = match OpenOptions::new()
+    .append(true)
+    .write(true)
+    .truncate(false)
+    .create(true)
+    .open(file_path) {
+        Err(e) => panic!("could not create : {}", e),
+        Ok(v) => v,
+    };
+    let mut w = BufWriter::new(file);
+    // writeln!(w,"mc_win,how,steps").unwrap();
+    let mut str_buf = format!("{},{},{}",mc_win, how, steps);
+    writeln!(w, "{}", str_buf).unwrap();
+}
+
+pub fn mc_vs_random_data_ex(filename: &str,index:usize , first: bool,mc_win: bool, how: &str, steps: usize) {//first, mc_win, how, steps
+    println!("write");
+    let model_num = filename.chars().filter_map(|f| f.to_string().parse().ok()).collect::<Vec<u32>>()[0];
+    let output_dir = Path::new("../data_new/mc_vs_random_non");
+    create_dir_all(&output_dir).unwrap();
+    let mut number = 0;
+    let file_path = loop {
+        number+=1;
+        let file_name = format!("vs10{}_data_exx.csv",index);
+        let path = output_dir.join(file_name);
+        // if path.is_file() {
+        //     break path;
+        // }else {
+        //     continue;
+        // }
+        break path;
+    };
+    let file = match OpenOptions::new()
+    .append(true)
+    .write(true)
+    .truncate(false)
+    .create(true)
+    .open(file_path) {
+        Err(e) => panic!("could not create : {}", e),
+        Ok(v) => v,
+    };
+    let mut w = BufWriter::new(file);
+    // writeln!(w,"mc_win,how,steps").unwrap();
+    let str_buf = format!("{},{},{},{}",first, mc_win, how, steps);
+    writeln!(w, "{}", str_buf).unwrap();
+}
+
+
+pub fn mc_vs_mc_data(filename: &str,buf: Vec<(bool, &str, usize)>) {//mc_win, how, steps
+    println!("write");
+    // let model_num = filename.chars().filter_map(|f| f.to_string().parse().ok()).collect::<Vec<u32>>()[0];
+    let output_dir = Path::new("../data_new/mc_vs_mc");
+    create_dir_all(&output_dir).unwrap();
+    let mut number = 0;
+    let file_path = loop {
+        number+=1;
+        let file_name = format!("{}_{}.csv",filename,number);
+        let path = output_dir.join(file_name);
+        // if path.is_file() {
+        //     break path;
+        // }else {
+        //     continue;
+        // }
+        break path;
+    };
+    let file = match OpenOptions::new()
+    .append(true)
+    .write(true)
+    .truncate(false)
+    .create(true)
+    .open(file_path) {
+        Err(e) => panic!("could not create : {}", e),
+        Ok(v) => v,
+    };
+    let mut w = BufWriter::new(file);
+    for (mc_win, how, steps) in buf {
+        let mut str_buf = format!("{},{},{}",mc_win, how, steps);
+        writeln!(w, "{}", str_buf).unwrap();
+    }
+}
