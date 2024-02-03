@@ -20,6 +20,7 @@ pub struct Zixza {
 }
 
 impl Zixza {
+    // 初期インスタンス
     pub fn new() -> Self {
         let board = Board::new();
         Self { player: Player::P1, first: Player::P1, board: board, dices: (Vec::new())}
@@ -27,6 +28,7 @@ impl Zixza {
     pub fn get_steps(&self)->usize{
         self.board.getsteps()
     }
+    // 研究で使用した初期配置
     pub fn testset(&mut self) {
         let alive = 1;
         let dice1 = Dice::new(1, 6, 5, 3, alive);
@@ -59,6 +61,7 @@ impl Zixza {
         self.board = Board::new();
         self.dices = Vec::new();
     }
+    // 初期配置
     #[allow(dead_code)]
     pub fn setup(&mut self) {
         let mut count = 0;
@@ -96,7 +99,7 @@ impl Zixza {
                 setdice(&mut self.board, player, count);
                 self.dices.push(dice);
             }
-            if count == 3 {
+            if count == 3 { // ダイスが6つ揃ったら先手後手の設定
                 if top1.iter().sum::<usize>() == top2.iter().sum() {
                     self.player = if top1[0] > top2[0] {Player::P1} else {Player::P2};
                 } else if top1.iter().sum::<usize>() > top2.iter().sum() {
@@ -112,19 +115,20 @@ impl Zixza {
         }
         self.dices.extend(p2_dices);
         self.board.setboardstate(BoardState::InMatch);
-
+        // ダイスの生成
         fn gendice(player: Player, num: usize, top: usize) -> Dice {
             println!("{}", player.to_string());
             println!("Top_Number is {}",top);
             let left = loop {
                 println!("Choose a left_number from{:?}", getsidenums(top));
-                let input = input_usize(); // サイコロの向き
+                let input = input_usize(); // ダイスの向き
                 if getsidenums(top).iter().any(|v| v==&input) {
                     break input;
                 }
             };
             Dice::new(num as usize, top as usize, left as usize, getrightnum(top, left) as usize, 1)
         }
+        // ダイスをボードに設置
         fn setdice(board: &mut Board, player: Player, count: usize) {
             let mut list: Vec<[usize; 2]> = board.initplace(player);
             if list.len() != 1{
@@ -150,6 +154,7 @@ impl Zixza {
             
         }
     }
+    // ゲームのメイン
     #[allow(dead_code)]
     pub fn start(&mut self) {
         self.board.setboardstate(BoardState::InMatch);
@@ -214,23 +219,8 @@ impl Zixza {
             }
         }
     }
-    pub fn select_action(&mut self) -> (usize, DiceMove, usize){
-        println!("");
-        println!("turn_count {}", self.board.getsteps());
-        println!("Player: {}",self.player.to_string());
-        println!("dice [top,left right]");
-        for v in &self.dices {
-            v.show();
-        }
-        self.board.show();
-        let action = self.select_dice_move();
-        return action;
-    }
+    // ゲームメイン（一手ごと）
     pub fn step(&mut self, action: (usize, DiceMove, usize)) -> (u64, isize, bool, usize){ // action(dice_num, dice_action, attack)  next_state, reward, done, how_to_win
-        // for v in &self.dices {
-        //     v.show();
-        // }
-        // self.board.show();
         self.board.setboardstate(BoardState::InMatch);
         let (dice_num, dice_action, attack) = (action.0, action.1, action.2);
         let mut done = false;
@@ -354,7 +344,7 @@ impl Zixza {
             return (next_state, reward, done, win);
         }
     }
-
+    // 盤面状態の取得（新）
     pub fn learn_get_state(&mut self) -> u64 {
         let mut buf_state: Vec<u64> = Vec::new();
         let mut posi_info: Vec<(usize, usize)> = Vec::new();
@@ -415,7 +405,7 @@ impl Zixza {
         let state = u64::from_str_radix(&m, 2).unwrap();
         return state;
     }
-
+    // 盤面状態の取得（旧）
     pub fn get_state(&mut self) -> u64 {
         let mut buf_state: Vec<u64> = Vec::new();
         if self.player == Player::P1 {
@@ -426,22 +416,17 @@ impl Zixza {
         for (n, dice) in self.dices.iter().enumerate() {
             let buf = self.board.get_dice_position(n+1);
             let dice_position = to_binary(change_48to31(buf[0]*7+buf[1]));
-            // println!("dice{}",n+1);
-            // println!("{}",buf[0]*7+buf[1]);
-            // println!("{}",change_48to31(buf[0]*7+buf[1]));
             let dice_info = to_binary(change_diceinfo_31(dice.gettop(), dice.getleft()));
             buf_state.extend(dice_position);
             buf_state.extend(dice_info);
         }
-        // println!("{:?}",buf_state);
         let mut m = "1".to_string();
         let str_state = buf_state.iter().map(|v| v.to_string()).collect::<Vec<String>>().concat();
         m.push_str(&str_state);
         let state = u64::from_str_radix(&m, 2).unwrap();
-        // println!("{}",state);
         return state;
     }
-    
+    // 行動可能な選択肢
     pub fn get_actions(&mut self)-> Vec<(usize, DiceMove, usize)> { // action(dice_num, dice_action, attack)
         let mut actions: Vec<(usize, DiceMove, usize)> = Vec::new();
         let (dice1, dice2) = self.dices.split_at(3);
@@ -459,13 +444,12 @@ impl Zixza {
         }
         return actions;
     }
-
+    // 勝利条件を満たしているか
     pub fn boardcheck(&mut self) -> (BoardState, usize){
         let mut how_win = 0;
         if self.board.getsameboardcount() == 3 {//1->引き分け
             self.board.setboardstate(BoardState::Finish);
             how_win = 1;
-            // println!("draw");//TODO draw
         }
         how_win = self.board.win_check(self.player); //2->占拠，3->到達
         let (dice1, dice2) = self.dices.split_at(3);
@@ -480,6 +464,7 @@ impl Zixza {
         }
         (self.board.getboardstate(), how_win)
     }
+    // ダイスの行動の選択（ダイス→行動）
     fn select_dice_move(&mut self) -> (usize, DiceMove, usize){
         let (dice1, dice2) = self.dices.split_at(3);
         let player_dice: Vec<Dice> = match self.player {
@@ -507,6 +492,7 @@ impl Zixza {
         };
         return (dice_num, dicemove, attack);
     }
+    // ダイスの行動の選択（ダイス&行動）同時
     pub fn select_dice_and_action(&mut self) -> (usize, DiceMove, usize){
         println!("");
         println!("turn_count {}", self.board.getsteps());
@@ -533,7 +519,7 @@ impl Zixza {
     }
     
 }
-
+// usize型で入力受け取り
 pub fn input_usize() -> usize {
     let mut input = String::new();
     'input: loop {
@@ -642,28 +628,10 @@ fn change_diceinfo_31(top: usize, left: usize) -> usize{
         _ => 31 //error
     }
 }
-
+// 2進数配列化
 pub fn to_binary(num: usize) -> Vec<u64> {
     let mut data: Vec<u64> = Vec::new();
     let mut num = num as u64;
-    // match num < 32 {
-    //     true => {
-    //         for _ in 0..5 {
-    //             if n > 1 {
-    //                 data.insert(0, n%2);
-    //             }else {
-    //                 data.insert(0, 0);
-    //             }
-    //             n /= 2;
-    //         }
-    //     }
-    //     false => {
-    //         for _ in 0..num.ilog2(){
-    //             data.insert(0, n%2);
-    //             n /= 2;
-    //         }
-    //     }
-    // }
     loop {
         data.push(num%2);
         if num == 1 || num == 0{

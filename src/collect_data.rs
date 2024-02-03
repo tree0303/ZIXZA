@@ -1,6 +1,6 @@
 
 use std::{path::Path, fs::{create_dir_all, OpenOptions}, io::{BufWriter, Write}, collections::HashMap};
-
+// ゲームの保存
 pub fn write_data(memories: &Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >) {//state, action, reward, actions) 
     let output_dir = Path::new("../data_new/data_file");
     create_dir_all(&output_dir).unwrap();
@@ -34,7 +34,7 @@ pub fn write_data(memories: &Vec< (u64, (u8, u8, u8), i8, Vec<(u8, u8, u8)>) >) 
         writeln!(w, "{}", str_buf).unwrap();
     }
 }
-
+// エージェントの保存
 pub fn save_agent(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice, movement), 確率
     let output_dir = Path::new("../data_new/agent_file");
     create_dir_all(&output_dir).unwrap();
@@ -71,7 +71,7 @@ pub fn save_agent(pi :&HashMap<u64,  HashMap<(u8, u8), f32>  >) {// state, (dice
         // println!("{}",str_buf);
     }
 } 
-
+// 対戦結果の保存
 pub fn mc_vs_random_data(filename: &str, buf: Vec<(bool, bool, &str, usize)>) {//first, mc_win, how, steps
     println!("write");
     let model_num = filename.chars().filter_map(|f| f.to_string().parse().ok()).collect::<Vec<u32>>()[0];
@@ -105,7 +105,7 @@ pub fn mc_vs_random_data(filename: &str, buf: Vec<(bool, bool, &str, usize)>) {/
         writeln!(w, "{}", str_buf).unwrap();
     }
 }
-
+// 対戦結果の保存
 pub fn mc_vs_random_data_2(filename: &str,mc_win: bool, how: &str, steps: usize) {//first, mc_win, how, steps
     println!("write");
     let model_num = filename.chars().filter_map(|f| f.to_string().parse().ok()).collect::<Vec<u32>>()[0];
@@ -137,22 +137,17 @@ pub fn mc_vs_random_data_2(filename: &str,mc_win: bool, how: &str, steps: usize)
     let mut str_buf = format!("{},{},{}",mc_win, how, steps);
     writeln!(w, "{}", str_buf).unwrap();
 }
-
+// 対戦結果の保存
 pub fn mc_vs_random_data_ex(filename: &str,index:usize , first: bool,mc_win: bool, how: &str, steps: usize) {//first, mc_win, how, steps
     println!("write");
     let model_num = filename.chars().filter_map(|f| f.to_string().parse().ok()).collect::<Vec<u32>>()[0];
-    let output_dir = Path::new("../data_new/mc_vs_random_non");
+    let output_dir = Path::new("../data_new/mc_vs_mc");
     create_dir_all(&output_dir).unwrap();
     let mut number = 0;
     let file_path = loop {
         number+=1;
-        let file_name = format!("vs10{}_data_exx.csv",index);
+        let file_name = format!("{}_{}.csv",filename,number);
         let path = output_dir.join(file_name);
-        // if path.is_file() {
-        //     break path;
-        // }else {
-        //     continue;
-        // }
         break path;
     };
     let file = match OpenOptions::new()
@@ -165,12 +160,10 @@ pub fn mc_vs_random_data_ex(filename: &str,index:usize , first: bool,mc_win: boo
         Ok(v) => v,
     };
     let mut w = BufWriter::new(file);
-    // writeln!(w,"mc_win,how,steps").unwrap();
     let str_buf = format!("{},{},{},{}",first, mc_win, how, steps);
     writeln!(w, "{}", str_buf).unwrap();
 }
-
-
+// 対戦結果の保存
 pub fn mc_vs_mc_data(filename: &str,buf: Vec<(bool, &str, usize)>) {//mc_win, how, steps
     println!("write");
     // let model_num = filename.chars().filter_map(|f| f.to_string().parse().ok()).collect::<Vec<u32>>()[0];

@@ -96,6 +96,7 @@ pub struct Board {
     boardstate: BoardState,
 }
 impl Board {
+    // 初期インスタンス
     pub fn new() -> Self {
         Self { steps: (0), board: (vec![
             vec![Piece::Player1 ,Piece::Wall ,Piece::Empty,Piece::Empty,Piece::Wall ,Piece::Wall ,Piece::Wall ],
@@ -114,12 +115,15 @@ impl Board {
             println!("{} {}",i, row);
         }
     }
+    // 初期配置可能場所
     pub fn initplace(&self, player: Player) -> Vec<[usize; 2]> {
+        // 初期配置の配列
         let place = [[[0, 2], [1, 1], [2, 0]], [[6, 4], [5, 5], [4, 6]]];
         let mut emp_places = Vec::new();
         match player {
             Player::P1 => {
                 for [i, n] in place[0] {
+                    // 配置されていなければ配列に入れる
                     if self.board[i][n] == Piece::Empty {
                         emp_places.push([i, n]);
                     }
@@ -127,6 +131,7 @@ impl Board {
             },
             Player::P2 => {
                 for [i, n] in place[1] {
+                    // 配置されていなければ配列に入れる
                     if self.board[i][n] == Piece::Empty {
                         emp_places.push([i, n]);
                     }
@@ -135,6 +140,7 @@ impl Board {
         }
         return emp_places;
     }
+    // 初期配置
     pub fn putdice(&mut self, place: [usize; 2], player: Player, count: usize) {
         match (player, count) {
             (Player::P1, 1) => self.board[place[0]][place[1]] = Piece::Dice1,
@@ -147,6 +153,7 @@ impl Board {
             (Player::P2, _) => self.board[place[0]][place[1]] = Piece::Empty,
         }
     }
+    // ボードの回転
     pub fn turnboard(&mut self) {
         let size = self.board.len();
         for i in 0..size/2{
@@ -164,11 +171,13 @@ impl Board {
             self.board[3][size-i-1] = buf1;
         }
     }
+    // あるダイスの行動可能な選択肢
     pub fn dice_move(&mut self, dice_num: usize, dices: &Vec<Dice>) -> Vec<(DiceMove, usize)> { //usize=>attack? // TODO 味方のダイスに攻撃できないようにする
         let mut dicemoves: Vec<(DiceMove, usize)> = Vec::new();
         let (player_dices, enemy_dices, beforemove) = if dice_num < 4 { (vec![Piece::Dice1, Piece::Dice2, Piece::Dice3], vec![Piece::Dice4, Piece::Dice5, Piece::Dice6], self.movementbefore_p1)} else {(vec![Piece::Dice4, Piece::Dice5, Piece::Dice6], vec![Piece::Dice1, Piece::Dice2, Piece::Dice3], self.movementbefore_p2)};
         let dice_position = self.get_dice_position(dice_num);
         //左が端ではなく，壁でもなく，味方のダイスがあるわけでもなく，一手番前を繰り返す行動でもない
+        // 左前移動
         if dice_position[1] != 0 && self.board[dice_position[0]][dice_position[1]-1] != Piece::Wall && !player_dices.iter().any(|v| *v==self.board[dice_position[0]][dice_position[1]-1]) && beforemove != (dice_num, DiceMove::BackwardRight) {
             if let Some(mut enemy_dice_position) = enemy_dices.iter().position(|v| *v==self.board[dice_position[0]][dice_position[1]-1]) {
                 if dice_num < 4 {enemy_dice_position+=3};
@@ -180,6 +189,7 @@ impl Board {
                 dicemoves.push((DiceMove::ForwardLeft, 6));
             }
         }
+        // 右前移動
         if dice_position[0] != 0 && self.board[dice_position[0]-1][dice_position[1]] != Piece::Wall && !player_dices.iter().any(|v| *v==self.board[dice_position[0]-1][dice_position[1]]) && beforemove != (dice_num, DiceMove::BackwardLeft) {
             if let Some(mut enemy_dice_position) = enemy_dices.iter().position(|v| *v==self.board[dice_position[0]-1][dice_position[1]]) {
                 if dice_num < 4 {enemy_dice_position+=3};
@@ -191,6 +201,7 @@ impl Board {
                 dicemoves.push((DiceMove::ForwardRight, 6));
             }
         }
+        // 左後ろ移動
         if dice_position[0] != 6 && self.board[dice_position[0]+1][dice_position[1]] != Piece::Wall && !player_dices.iter().any(|v| *v==self.board[dice_position[0]+1][dice_position[1]]) && beforemove != (dice_num, DiceMove::ForwardRight) {
             if let Some(mut enemy_dice_position) = enemy_dices.iter().position(|v| *v==self.board[dice_position[0]+1][dice_position[1]]) {
                 if dice_num < 4 {enemy_dice_position+=3};
@@ -202,6 +213,7 @@ impl Board {
                 dicemoves.push((DiceMove::BackwardLeft, 6));
             }
         }
+        // 右後ろ移動
         if dice_position[1] != 6 && self.board[dice_position[0]][dice_position[1]+1] != Piece::Wall && !player_dices.iter().any(|v| *v==self.board[dice_position[0]][dice_position[1]+1]) && beforemove != (dice_num, DiceMove::ForwardLeft)  {
             if let Some(mut enemy_dice_position) = enemy_dices.iter().position(|v| *v==self.board[dice_position[0]][dice_position[1]+1]) {
                 if dice_num < 4 {enemy_dice_position+=3};
@@ -218,30 +230,35 @@ impl Board {
         // if beforemove != (dice_num, DiceMove::TurnLeft) && self.sameboardcount < 2 {dicemoves.push((DiceMove::TurnRight, 6));}
         dicemoves // attack 012345 non6
     }
+    // ダイスの左前移動
     pub fn forward_left(&mut self, dice_num: usize) {
         let dice_position = self.get_dice_position(dice_num);
         self.board[dice_position[0]][dice_position[1]-1] = self.board[dice_position[0]][dice_position[1]];
         self.board[dice_position[0]][dice_position[1]] = Piece::Empty;
         self.sameboardcount=0;
     }
+    // ダイスの右前移動
     pub fn forward_right(&mut self, dice_num: usize) {
         let dice_position = self.get_dice_position(dice_num);
         self.board[dice_position[0]-1][dice_position[1]] = self.board[dice_position[0]][dice_position[1]];
         self.board[dice_position[0]][dice_position[1]] = Piece::Empty;
         self.sameboardcount=0;
     }
+    // ダイスの左後ろ移動
     pub fn backward_left(&mut self, dice_num: usize) {
         let dice_position = self.get_dice_position(dice_num);
         self.board[dice_position[0]+1][dice_position[1]] = self.board[dice_position[0]][dice_position[1]];
         self.board[dice_position[0]][dice_position[1]] = Piece::Empty;
         self.sameboardcount=0;
     }
+    // ダイスの右後ろ移動
     pub fn backward_right(&mut self, dice_num: usize) {
         let dice_position = self.get_dice_position(dice_num);
         self.board[dice_position[0]][dice_position[1]+1] = self.board[dice_position[0]][dice_position[1]];
         self.board[dice_position[0]][dice_position[1]] = Piece::Empty;
         self.sameboardcount=0;
     }
+    // 1手番前の行動の保持
     pub fn rewind(&mut self, player: Player, dice_num: usize, dicemove: DiceMove) {
         match player {
             Player::P1 => self.movementbefore_p1 = (dice_num, dicemove),
@@ -260,6 +277,7 @@ impl Board {
     pub fn getsteps(&self) -> usize{
         self.steps
     }
+    // ダイスの場所
     pub fn get_dice_position(&mut self, dice_num: usize) -> [usize; 2] { //dice_num->123456
         let mut dice_position = [0, 0];
         'out: for (i,v) in self.board.iter().enumerate() {
@@ -272,25 +290,30 @@ impl Board {
         }
         dice_position
     }
+    // 勝利条件を満たしているか（占拠・到達）
     pub fn win_check(&mut self, player: Player) -> usize{
         let center = vec![[2, 4], [3, 3], [4, 2]];
         let (p2, p1) = (vec![Piece::Dice4, Piece::Dice5, Piece::Dice6], vec![Piece::Dice1, Piece::Dice2, Piece::Dice3]);
         match player {
             Player::P1 => {
+                // 占拠
                 if p1.iter().any(|w| *w==self.board[center[0][0]][center[0][1]]) && p1.iter().any(|w| *w==self.board[center[1][0]][center[1][1]]) && p1.iter().any(|w| *w==self.board[center[2][0]][center[2][1]]){
                     self.boardstate = BoardState::Finish;
                     return 2;
                 }
+                // 到達
                 if p1.iter().any(|w| *w==self.board[1][1]) {
                     self.boardstate = BoardState::Finish;
                     return 3;
                 }
             }
             Player::P2 => {
+                // 占拠
                 if p2.iter().any(|w| *w==self.board[center[0][0]][center[0][1]]) && p2.iter().any(|w| *w==self.board[center[1][0]][center[1][1]]) && p2.iter().any(|w| *w==self.board[center[2][0]][center[2][1]]){
                     self.boardstate = BoardState::Finish;
                     return 2;
                 }
+                // 到達
                 if p2.iter().any(|w| *w==self.board[1][1]) {
                     self.boardstate = BoardState::Finish;
                     return 3;

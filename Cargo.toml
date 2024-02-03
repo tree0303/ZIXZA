@@ -10,6 +10,3 @@ rand = {version = "*"}
 getrandom ={ version = "*", features = ["js"]}
 wasm-bindgen = {version = "*"}
 csv = {version = "*"}
-
-[lib]
-crate-type = ["cdylib"]

@@ -7,11 +7,6 @@ use super::board::DiceMove;
 
 pub struct RandomAgent {
     gamma: f64,
-    // key: Vec<Vec<u64>>,
-    // pi: Vec<Vec<usize>>,
-    // q: Vec<f64>,
-    // cnt: Vec<f64>,
-    // memory: Vec< (Vec<u64>, (usize, DiceMove, usize), usize) >,
     q: HashMap<u64, f64>,
     cnt: HashMap<u64, f64>,
     memory: Vec< (u64, (usize, DiceMove, usize), isize) >,
@@ -44,7 +39,6 @@ impl RandomAgent {
             let _ = *self.q.entry(*state).or_insert(0.0);
             *self.q.entry(*state).or_insert(0.0) += (g - self.q.get(state).unwrap()) / self.cnt.get(state).unwrap();
         }
-        // println!("{:?}", self.q);
     }
     pub fn q_show(&self) {
         let mut count = 0;

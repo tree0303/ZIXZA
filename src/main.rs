@@ -14,7 +14,8 @@ use crate::collect_data::{mc_vs_random_data_2, mc_vs_mc_data, mc_vs_random_data_
 use crate::load_agent::load_agent_into_filename;
 use crate::zixza::{Zixza, input_usize};
 
-const LOOPNUM: usize = 4000000;
+const LOOPNUM: usize = 2000000;
+// 強化学習2
 fn get_data_in_agent_by_new_state() {
     let loopnum = LOOPNUM;
     let mut game = Zixza::new();
@@ -31,7 +32,7 @@ fn get_data_in_agent_by_new_state() {
                 let actions = game.get_actions();
                 let new_state = game.learn_get_state();
                 let action = agent.get_action(&new_state, &actions);
-                let (_, reward, mut done, how_win) = game.step(action);
+                let (_, reward, mut done, _) = game.step(action);
                 if action.1 != DiceMove::Path {
                     agent.add(new_state, action, reward, actions);
                 } else if action.1 == DiceMove::Path {
@@ -41,14 +42,14 @@ fn get_data_in_agent_by_new_state() {
                     agent.update();
                     break 'game;
                 }
-                if count > 140 {
+                if count > 80 {
                     break 'game;
                 }
             }
-            if count > 140 {
-                break 'over;
-            } else {
+            if count > 80 {
                 continue 'over;
+            } else {
+                break 'over;
             }
         }
         
@@ -57,9 +58,12 @@ fn get_data_in_agent_by_new_state() {
             // write_data(agent.get_memories());
             save_agent(agent.get_pi());
         }
+        if i % 1000000 == 0 && i != 0{
+            save_agent(agent.get_pi());
+        }
     }
 }
-
+// 強化学習
 fn get_data_in_agent() {
     let loopnum = LOOPNUM;
     let mut game = Zixza::new();
@@ -134,7 +138,7 @@ fn get_data_in_agent() {
     }
 
 }
-
+// AIvs人
 fn mc_vs_player() {
     let mut game = Zixza::new();
     let pi = load_agent();
@@ -174,11 +178,13 @@ fn mc_vs_player() {
         player = if player {false} else {true};
     }
 }
+// ゲームモデル初期段階
 fn first_code(){
     let mut game = Zixza::new();
     game.setup();
     game.start();
 }
+// ゲームモデル step毎
 fn second_code(){
     let mut game = Zixza::new();
     game.reset();
@@ -195,31 +201,30 @@ fn second_code(){
         }
     }
 }
-
+// AIvsAI
 fn mc_vs_mc(){
     let mut game = Zixza::new();
     let mut agent_1 = McAgent::new();
     let mut agent_2 = McAgent::new();
     // let file_names = ["agent_set1.txt","agent_set2.txt","agent_set3.txt","agent_set4.txt",
     // "agent_set5.txt","agent_set6.txt","agent_set7.txt","agent_set8.txt","agent_set9.txt"];
-    let file_names = ["agent_set3.txt","agent_set9.txt"];
+    let file_names = ["agent_set14.txt","agent_set15.txt"];
     let mut buf= Vec::new();
     println!("start");
     let pi_1 = load_agent_into_filename(file_names[0]);
     let pi_2 = load_agent_into_filename(file_names[1]);
     agent_1.load(pi_1);
     agent_2.load(pi_2);
-    for i in 0..100{
+    for i in 0..20000{
         println!("{}",i);
         game.reset();
         game.testset();
         agent_1.reset();
         agent_2.reset();
-        let mut mc_1 = if i <500 {true}else{false};
+        let mut mc_1 = if i <10000 {true}else{false};
         let mut inmatch = false;
         let mut mc_win = false;
         let mut how = "Exception";
-        // println!("start");
         'main_game: loop {
             let actions = game.get_actions();
             let state = game.get_state();
@@ -278,13 +283,96 @@ fn mc_vs_mc(){
         if i%100==0{
             println!("{}",game.get_steps());
         }
-        let first = if i <500 {true}else{false};
+        let first = if i <10000 {true}else{false};
         buf.push((mc_win, how, game.get_steps()));
     }
-    mc_vs_mc_data("mc3_vs_mc9", buf);
+    mc_vs_mc_data("mc14_vs_mc15", buf);
     println!("end");
 }
 
+fn mc_vs_mc_2(){
+    let mut game = Zixza::new();
+    let mut agent_1 = McAgent::new();
+    let mut agent_2 = McAgent::new();
+    // let file_names = ["agent_set1.txt","agent_set2.txt","agent_set3.txt","agent_set4.txt","agent_set5.txt","agent_set6.txt","agent_set7.txt"];
+    let file_names = ["agent_set14.txt","agent_set15.txt"];
+    // let file_names = ["agent_set1.txt","agent_set10.txt"];
+    let pi_1 = load_agent_into_filename(file_names[0]);
+    let pi_2 = load_agent_into_filename(file_names[1]);
+    agent_1.load(pi_1);
+    agent_2.load(pi_2);
+    for i in 0..20000{
+        println!("start");
+        println!("{}",i);
+        game.reset();
+        game.testset();
+        agent_1.reset();
+        agent_2.reset();
+        let mut mc_1 = if i <10000 {true}else{false};
+        // let state_flag = if index >= 5 {false} else {true};
+        let state_flag = false;//true->旧state  false->新state
+        let mut inmatch = false;
+        let mut mc_win = false;
+        let mut how = "Exception";
+        // println!("start");
+        'main_game: loop {
+            println!("{}",game.get_steps());
+            let actions = game.get_actions();
+            let state = if state_flag {game.get_state()} else {game.learn_get_state()};
+            if mc_1 {
+                let action = agent_1.get_action(&state, &actions);
+                let (_, _, done, how_win) = game.step(action);
+                inmatch = done;
+                if inmatch {
+                    mc_win = true;
+                    how = match how_win {
+                        1 => "Draw",
+                        2 => "Occupation",
+                        3 => "Reace",
+                        4 => "Attack",
+                        _ => how,
+                    }
+                }
+                if action.1 == DiceMove::Path {
+                    inmatch = true;
+                }
+            }else {
+                let action = agent_2.get_action(&state, &actions);
+                let (_, _, done, how_win) = game.step(action);
+                inmatch = done;
+                if inmatch {
+                    how = match how_win {
+                        1 => "Draw",
+                        2 => "Occupation",
+                        3 => "Reace",
+                        4 => "Attack",
+                        _ => how,
+                    }
+                }
+                if action.1 == DiceMove::Path {
+                    inmatch = true;
+                    mc_win = true;
+                    how = match how_win {
+                        1 => "Draw",
+                        2 => "Occupation",
+                        3 => "Reace",
+                        4 => "Attack",
+                        _ => how,
+                    }
+                }
+            }
+            if inmatch{
+                break 'main_game;
+            }
+            mc_1 = if mc_1 {false} else {true};
+        }
+        let first = if i <10000 {true}else{false};
+        mc_vs_random_data_ex("14_vs_15",1,first, mc_win, how, game.get_steps());
+        println!("end");
+    }
+}
+
+// AIvsRandom
 fn mc_vs_random(){
     let mut game = Zixza::new();
     let mut agent = McAgent::new();
@@ -373,14 +461,13 @@ fn mc_vs_random(){
         println!("end");
     }
 }
-
+// AIvsRandom2
 fn mc_vs_random_2(){
     let mut game = Zixza::new();
     let mut agent = McAgent::new();
     let mut random = RandomAgent::new();
     // let file_names = ["agent_set1.txt","agent_set2.txt","agent_set3.txt","agent_set4.txt","agent_set5.txt","agent_set6.txt","agent_set7.txt"];
-    let file_names = ["agent_set2.txt","agent_set3.txt","agent_set4.txt",
-    "agent_set5.txt","agent_set9.txt"];
+    let file_names = ["agent_set14.txt"];
     // let file_names = ["agent_set1.txt","agent_set10.txt"];
     for (index, file_name) in file_names.into_iter().enumerate(){
         // if num !=0 { continue;}
@@ -395,7 +482,7 @@ fn mc_vs_random_2(){
             
             let mut mc = if i <10000 {true}else{false};
             // let state_flag = if index >= 5 {false} else {true};
-            let state_flag = true;
+            let state_flag = false;//true->旧state  false->新state
             let mut inmatch = false;
             let mut mc_win = false;
             let mut how = "Exception";
@@ -456,7 +543,7 @@ fn mc_vs_random_2(){
                 mc = if mc {false} else {true};
             }
             let first = if i <10000 {true}else{false};
-            mc_vs_random_data_ex(file_name,index+2,first, mc_win, how, game.get_steps());
+            mc_vs_random_data_ex(file_name,index,first, mc_win, how, game.get_steps());
         }
         
         println!("end");
@@ -490,6 +577,7 @@ fn main() {
 
     }else if a == 13 {
         mc_vs_mc();
-        
+    }else if a == 14 {
+        mc_vs_mc_2();
     }
 }
